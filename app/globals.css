@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-indigo-deepest: #0e0c1a;
+  --color-indigo-primary: #2d2660;
+  --color-indigo-mid: #534ab7;
+  --color-indigo-light: #7f77dd;
+  --color-amethyst: #c8b8ff;
+  --color-star-white: #eae8ff;
+  --color-gold-warm: #c8a855;
+  --color-gold-note: #f0eac8;
+  --color-bg-light: #faf8ff;
+  --color-bg-surface: #f3f0ff;
+  --color-text-dark: #1a1630;
+  --color-text-mid: #3c3270;
+  --color-text-muted: #7b74a8;
+  --color-divider: rgba(127, 119, 221, 0.15);
+  --color-divider-strong: rgba(127, 119, 221, 0.3);
+  --color-success: #1d9e75;
+  --color-error: #e24b4a;
+  --color-whatsapp: #25d366;
+
+  --gradient-kashi: linear-gradient(155deg, #1a1630 0%, #2d2660 55%, #534ab7 100%);
+  --gradient-vaishno: linear-gradient(155deg, #0e1a14 0%, #0f6e56 55%, #1d9e75 100%);
+  --gradient-ujjain: linear-gradient(155deg, #1a0e2a 0%, #6b3a8b 55%, #9b6abb 100%);
+  --gradient-shirdi: linear-gradient(155deg, #1a0e14 0%, #72243e 55%, #d4537e 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-light: #0e0c1a;
+    --color-bg-surface: #1a1630;
+    --color-text-dark: #eae8ff;
+    --color-text-mid: #afa9ec;
+    --color-text-muted: #7f77dd;
+    --color-divider: rgba(200, 184, 255, 0.1);
+    --color-divider-strong: rgba(200, 184, 255, 0.2);
+  }
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg-light);
+  color: var(--color-text-dark);
+  font-family: 'DM Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}

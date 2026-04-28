@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String               @id @default(cuid())
+  name                 String
+  phone                String               @unique
+  language             String               @default("en")
+  intentionKey         String
+  intentionLabel       String
+  groupSize            Int                  @default(1)
+  hasSenior            Boolean              @default(false)
+  seniorMode           Boolean              @default(false)
+  mobilityNeeds        String[]             @default(["none"])
+  dietaryPrefs         String[]             @default(["no_preference"])
+  deviceToken          String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  conciergeAssignment  ConciergeAssignment?
+  trips                Trip[]
+  notifications        Notification[]
+  messages             ConciergeMessage[]
+}
+
+model Concierge {
+  id                String               @id @default(cuid())
+  displayName       String
+  phone             String
+  languages         String[]
+  isOnline          Boolean              @default(false)
+  activeUsers       Int                  @default(0)
+  lastMessageToUser String?
+  assignments       ConciergeAssignment[]
+  messages          ConciergeMessage[]
+}
+
+model ConciergeAssignment {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  conciergeId String
+  assignedAt  DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+  concierge   Concierge @relation(fields: [conciergeId], references: [id])
+}
+
+model ConciergeMessage {
+  id          String    @id @default(cuid())
+  userId      String
+  conciergeId String
+  sender      String
+  body        String
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+  concierge   Concierge @relation(fields: [conciergeId], references: [id])
+}
+
+model Trip {
+  id                  String         @id @default(cuid())
+  userId              String
+  name                String
+  intentionKey        String
+  intentionLabel      String
+  contextNote         String?
+  duration            String
+  budget              String
+  circuitId           String
+  circuitName         String
+  departureFrom       String?
+  departureTo         String?
+  muhuratTithi        String?
+  muhuratQuality      String?
+  pilgrims            Int
+  hasSenior           Boolean        @default(false)
+  mobilityNeeds       String[]
+  dietaryPrefs        String[]
+  specialNote         String?
+  status              String         @default("planning")
+  planningProgressPct Int            @default(20)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  user                User           @relation(fields: [userId], references: [id])
+  documents           TripDocument[]
+  reminders           Reminder[]
+}
+
+model TripDocument {
+  id        String   @id @default(cuid())
+  tripId    String
+  name      String
+  type      String
+  status    String   @default("pending")
+  fileUrl   String?
+  createdAt DateTime @default(now())
+  trip      Trip     @relation(fields: [tripId], references: [id])
+}
+
+model Reminder {
+  id          String   @id @default(cuid())
+  tripId      String
+  message     String
+  scheduledAt DateTime
+  sent        Boolean  @default(false)
+  trip        Trip     @relation(fields: [tripId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  type      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
