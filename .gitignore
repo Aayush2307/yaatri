@@ -14,3 +14,9 @@ skills-lock.json
 .env.local
 
 !.env.example
+.env
+.env.local
+app/generated/
+.env
+.env.local
+app/generated/
