@@ -89,6 +89,90 @@ export const shaktiPeethas: ShaktiPeetha[] = [
   },
 ];
 
+
+export type CharDhamTemple = {
+  id: string;
+  name: string;
+  deity: string;
+  location: string;
+  state: string;
+  altitude?: string;
+  significance: string;
+  travel: {
+    access: string;
+    trek?: string;
+  };
+  darshan?: {
+    season: string;
+    timings?: string;
+  };
+};
+
+export const charDham: CharDhamTemple[] = [
+  {
+    id: 'yamunotri',
+    name: 'Yamunotri',
+    deity: 'Goddess Yamuna',
+    location: 'Uttarkashi',
+    state: 'Uttarakhand',
+    altitude: '3293m',
+    significance: 'Source of River Yamuna; associated with protection and purity.',
+    travel: {
+      access: 'Road till Janki Chatti',
+      trek: '6 km trek',
+    },
+    darshan: {
+      season: 'May – October',
+    },
+  },
+  {
+    id: 'gangotri',
+    name: 'Gangotri',
+    deity: 'Goddess Ganga',
+    location: 'Uttarkashi',
+    state: 'Uttarakhand',
+    altitude: '3100m',
+    significance: 'Origin of the sacred Ganga; symbol of purification.',
+    travel: {
+      access: 'Direct road access',
+    },
+    darshan: {
+      season: 'May – October',
+    },
+  },
+  {
+    id: 'kedarnath',
+    name: 'Kedarnath',
+    deity: 'Lord Shiva',
+    location: 'Rudraprayag',
+    state: 'Uttarakhand',
+    altitude: '3583m',
+    significance: 'One of the 12 Jyotirlingas; associated with moksha and liberation.',
+    travel: {
+      access: 'Road till Gaurikund',
+      trek: '16 km trek',
+    },
+    darshan: {
+      season: 'May – October',
+    },
+  },
+  {
+    id: 'badrinath',
+    name: 'Badrinath',
+    deity: 'Lord Vishnu',
+    location: 'Chamoli',
+    state: 'Uttarakhand',
+    altitude: '3133m',
+    significance: 'Major Vishnu temple; represents spiritual enlightenment.',
+    travel: {
+      access: 'Direct road access',
+    },
+    darshan: {
+      season: 'May – October',
+    },
+  },
+];
+
 export const meera = {
   name: 'Meera',
   role: 'Spiritual concierge',

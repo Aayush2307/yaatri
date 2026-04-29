@@ -70,6 +70,14 @@ export default function ExplorePage() {
                 <p className="pt-1 text-xs text-[#8A7665]">12 sacred jyotirlinga traditions across Bharat.</p>
               </div>
               <div className="rounded-xl border border-[rgba(43,33,25,0.12)] bg-[#FFFDF9] p-3">
+                <p className="text-sm font-medium text-[#2B2119]">Char Dham</p>
+                <p className="pt-1 text-xs text-[#8A7665]">Four sacred Himalayan shrines representing the path to purification and liberation.</p>
+                <p className="pt-1 text-xs text-[#8A7665]">Yamunotri · Gangotri · Kedarnath · Badrinath</p>
+                <Link href="/explore/char-dham" className="mt-2 inline-flex min-h-[36px] items-center text-xs font-medium text-[#C66A2B]">
+                  Explore this yatra →
+                </Link>
+              </div>
+              <div className="rounded-xl border border-[rgba(43,33,25,0.12)] bg-[#FFFDF9] p-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium text-[#2B2119]">Shakti Peethas</p>
                   <span className="rounded-full bg-[#F3E0C7] px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-[#A45B21]">Devi / Shakti</span>
