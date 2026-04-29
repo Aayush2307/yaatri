@@ -63,6 +63,26 @@ export default function ExplorePage() {
 
         <section className="mt-6 space-y-4">
           <div className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.1em] text-[#8A7665]">Sacred circuits of Bharat</p>
+            <div className="mt-3 space-y-3">
+              <div className="rounded-xl border border-[rgba(43,33,25,0.12)] bg-[#FFFDF9] p-3">
+                <p className="text-sm font-medium text-[#2B2119]">Jyotirlinga circuit</p>
+                <p className="pt-1 text-xs text-[#8A7665]">12 sacred jyotirlinga traditions across Bharat.</p>
+              </div>
+              <div className="rounded-xl border border-[rgba(43,33,25,0.12)] bg-[#FFFDF9] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-[#2B2119]">Shakti Peethas</p>
+                  <span className="rounded-full bg-[#F3E0C7] px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-[#A45B21]">Devi / Shakti</span>
+                </div>
+                <p className="pt-1 text-xs text-[#8A7665]">A living map of Devi traditions rooted in sacred geography.</p>
+                <p className="pt-1 text-xs text-[#8A7665]">51 sacred sites across Bharat</p>
+                <Link href="/explore/shakti-peethas" className="mt-2 inline-flex min-h-[36px] items-center text-xs font-medium text-[#C66A2B]">
+                  Explore this yatra →
+                </Link>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
             <p className="font-serif text-xl">Not sure where to begin?</p>
             <p className="pt-2 text-sm leading-relaxed text-[#8A7665]">
               Meera can help you choose based on your sankalp, dates, and family needs.
