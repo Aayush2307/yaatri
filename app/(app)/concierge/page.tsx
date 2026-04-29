@@ -1,45 +1,88 @@
 'use client';
 
-import { useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 
-const seed = [
-  { sender: 'concierge', body: 'Namaste. I am Meera, your spiritual concierge.' },
-  { sender: 'concierge', body: 'Would you like darshan-first itinerary or ritual-first itinerary?' },
+const fallbackNumber = '910000000000';
+const defaultPrompt = 'Namaste Meera, I need help planning my yatra';
+
+const promptChips = [
+  'Which yatra is right for my family?',
+  'What is the best time for darshan?',
+  'Can you help plan a 3-day trip?',
 ];
 
+function buildWhatsAppLink(message: string) {
+  const configuredNumber = process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') || fallbackNumber;
+  return `https://wa.me/${configuredNumber}?text=${encodeURIComponent(message)}`;
+}
+
 export default function ConciergePage() {
-  const [messages, setMessages] = useState(seed);
-  const [text, setText] = useState('');
+  const primaryWhatsAppHref = buildWhatsAppLink(defaultPrompt);
 
   return (
-    <main className="flex min-h-screen flex-col bg-bg-surface pb-24">
-      <header className="bg-indigo-deepest px-5 py-4 text-star-white">
-        <p className="text-[14px]">Meera · Online · spiritual concierge</p>
-      </header>
-      <div className="flex-1 space-y-2 px-5 py-4">
-        {messages.map((m, idx) => (
-          <div key={`${m.body}-${idx}`} className={`max-w-[82%] rounded-card border-[0.5px] px-3 py-2 text-[11px] ${m.sender === 'concierge' ? 'border-divider bg-white text-text-dark' : 'ml-auto border-indigo-primary bg-indigo-primary text-star-white'}`}>
-            {m.body}
+    <main className="min-h-screen bg-[#F5F0E8] pb-24 text-[#2B2119]">
+      <div className="mx-auto max-w-md px-4 pt-6">
+        <section>
+          <p className="text-sm tracking-[0.12em] text-[#8A7665]">Meera Concierge</p>
+          <h1 className="pt-2 font-serif text-4xl leading-tight">Your yatra, held by someone who understands.</h1>
+          <p className="pt-3 text-sm leading-relaxed text-[#8A7665]">
+            Meera helps with rituals, darshan timing, routes, and family needs — through WhatsApp.
+          </p>
+        </section>
+
+        <section className="mt-6 rounded-2xl bg-gradient-to-br from-[#F8E9D3] via-[#FFFCF7] to-[#F4E2BF] p-5 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFF8EE] text-xl text-[#C66A2B] shadow-sm">ॐ</div>
+            <div>
+              <p className="font-serif text-2xl leading-tight">Meera</p>
+              <p className="text-xs text-[#8A7665]">Available on WhatsApp</p>
+            </div>
           </div>
-        ))}
-      </div>
-      <div className="px-5 pb-3">
-        <div className="flex items-center gap-2 rounded-card border-[0.5px] border-divider bg-white p-2">
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Ask Meera anything" className="min-h-[44px] flex-1 rounded-[10px] bg-bg-surface px-3 text-[13px]" />
-          <button
-            type="button"
-            onClick={() => {
-              if (!text.trim()) return;
-              setMessages((prev) => [...prev, { sender: 'user', body: text }, { sender: 'concierge', body: 'Received. I will refine your itinerary and revert shortly.' }]);
-              setText('');
-            }}
-            className="h-[30px] w-[30px] rounded-full bg-indigo-mid text-star-white"
+          <p className="pt-4 text-sm leading-relaxed text-[#6F5946]">Ask before you plan. Ask while you travel.</p>
+
+          <a
+            href={primaryWhatsAppHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-[#C66A2B] px-4 text-sm font-medium text-[#FFF8EE] shadow-sm"
           >
-            →
-          </button>
-        </div>
+            Continue on WhatsApp
+          </a>
+        </section>
+
+        <section className="mt-6 space-y-3">
+          <div className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
+            <p className="font-medium">Choose the right yatra</p>
+            <p className="pt-1 text-sm text-[#8A7665]">Based on your sankalp, dates, and family needs.</p>
+          </div>
+          <div className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
+            <p className="font-medium">Plan darshan correctly</p>
+            <p className="pt-1 text-sm text-[#8A7665]">Understand temple timings, rituals, and local flow.</p>
+          </div>
+          <div className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
+            <p className="font-medium">Travel with confidence</p>
+            <p className="pt-1 text-sm text-[#8A7665]">Get help when plans change during the journey.</p>
+          </div>
+        </section>
+
+        <section className="mt-6">
+          <p className="text-xs uppercase tracking-[0.12em] text-[#8A7665]">Suggested prompts</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {promptChips.map((prompt) => (
+              <a
+                key={prompt}
+                href={buildWhatsAppLink(prompt)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] px-3 py-2 text-xs text-[#6F5946] shadow-sm"
+              >
+                {prompt}
+              </a>
+            ))}
+          </div>
+        </section>
       </div>
+
       <div className="fixed bottom-0 left-0 right-0"><BottomNav active="concierge" /></div>
     </main>
   );
