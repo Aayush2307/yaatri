@@ -3,15 +3,15 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { LogoMark } from '@/components/icons/LogoMark';
-import { MandalaWatermark } from '@/components/icons/MandalaWatermark';
+import { Card } from '@/components/ui/Card';
+import { ButtonLink } from '@/components/ui/Button';
 import { circuits, meera, panchangCard, sampleTrip } from '@/lib/mockData';
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 350);
+    const t = setTimeout(() => setLoading(false), 260);
     return () => clearTimeout(t);
   }, []);
 
@@ -28,86 +28,96 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-bg-surface pb-24">
-      <section className="relative overflow-hidden bg-indigo-deepest px-5 pb-5 pt-6 text-star-white">
-        <MandalaWatermark className="pointer-events-none absolute -right-12 -top-12 h-[220px] w-[220px] opacity-[0.06]" />
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <LogoMark className="h-8 w-8" />
-            <span className="text-[14px] tracking-[0.18em]">YAATRI</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/notifications" aria-label="Notifications" className="flex h-8 w-8 items-center justify-center rounded-full border-[0.5px] border-divider text-[14px]">
-              🔔
-            </Link>
-            <Link href="/account" className="h-8 w-8 rounded-full bg-amethyst/25 text-center text-[12px] leading-8">
-              {name[0] || 'Y'}
-            </Link>
-          </div>
+    <main className="min-h-screen bg-[var(--color-parchment)] pb-24">
+      <header className="flex items-center justify-between border-b-[0.5px] border-[var(--color-divider)] px-5 py-5">
+        <div className="flex items-center gap-2">
+          <span className="text-[26px] leading-none text-[var(--color-gold)]">•</span>
+          <span className="font-serif text-[44px] tracking-[0.12em] text-[var(--color-text-dark)]">YAATRI</span>
         </div>
-        <p className="pt-5 text-[10px] uppercase tracking-[0.1em] text-gold-warm">Good morning, {name}</p>
-        <h1 className="pt-2 font-serif text-[30px] font-light leading-[1.18]">
-          From <span className="italic text-amethyst">sankalp</span> to darshan — every step held.
+        <div className="flex items-center gap-2">
+          <Link href="/notifications" aria-label="Notifications" className="flex h-10 w-10 items-center justify-center rounded-full border-[0.5px] border-[var(--color-divider)] text-[18px] text-[var(--color-text-mid)]">
+            🔔
+          </Link>
+          <Link href="/account" className="flex h-10 w-10 items-center justify-center rounded-full border-[0.5px] border-[var(--color-divider-strong)] bg-[#ECE2D0] text-[14px] text-[var(--color-text-mid)]">
+            {(name[0] || 'Y').toUpperCase()}
+          </Link>
+        </div>
+      </header>
+
+      <section className="px-5 pb-6 pt-7 text-[var(--color-paper)]" style={{ background: 'var(--gradient-ink-hero)' }}>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--color-gold)]">Good morning, {name}</p>
+        <h1 className="pt-4 text-[58px] leading-[1.06]">
+          From <span className="italic text-[var(--color-gold)]">sankalp</span> to darshan — every step held.
         </h1>
-        <Link href="/panchang" className="mt-4 block rounded-card border-[0.5px] border-[rgba(200,184,255,0.2)] bg-[rgba(127,119,221,0.12)] p-3">
-          <p className="text-[13px]">
-            {panchangCard.tithi} · {panchangCard.sanskrit}
-          </p>
-          <p className="pt-1 text-[11px] text-star-white/70">{panchangCard.muhurat}</p>
+
+        <Link href="/panchang" className="mt-6 block rounded-[18px] border-[0.5px] border-[#6d5433] bg-[rgba(255,255,255,0.04)] p-4">
+          <p className="text-[15px]">{panchangCard.tithi} · {panchangCard.sanskrit}</p>
+          <p className="pt-1 text-[13px] text-[#cab897]">{panchangCard.muhurat}</p>
         </Link>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <Link href="/plan" className="flex min-h-[44px] items-center justify-center rounded-[11px] bg-indigo-mid text-[13px]">
-            Plan my yatra
-          </Link>
-          <Link href="/concierge" className="flex min-h-[44px] items-center justify-center rounded-[11px] border-[0.5px] border-amethyst text-[13px]">
-            Concierge
-          </Link>
-        </div>
       </section>
 
-      <section className="space-y-4 px-5 pt-5">
-        <div className="rounded-card p-4 text-star-white" style={{ background: 'linear-gradient(155deg, #1A1630 0%, #2D2660 55%, #3D3480 100%)' }}>
-          <p className="text-[13px]">{sampleTrip.name}</p>
-          <p className="text-[11px] text-star-white/70">{sampleTrip.dates}</p>
-          <div className="mt-2 h-[4px] rounded-full bg-star-white/20">
-            <div className="h-full rounded-full bg-amethyst" style={{ width: `${sampleTrip.progress}%` }} />
-          </div>
+      <section className="space-y-6 px-5 pt-5">
+        <div className="grid grid-cols-2 gap-3">
+          <ButtonLink href="/plan">Plan my yatra</ButtonLink>
+          <ButtonLink href="/concierge">Concierge</ButtonLink>
         </div>
 
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.15em] text-[#9a6d2b]">Active yatra</p>
+              <p className="font-serif text-[44px] leading-none text-[var(--color-text-dark)]">{sampleTrip.name}</p>
+              <p className="pt-1 text-[14px] text-[var(--color-text-mid)]">{sampleTrip.dates} · 4 nights</p>
+            </div>
+            <span className="rounded-full border-[0.5px] border-[#d8bf8a] bg-[#efe2c6] px-3 py-1 text-[13px] text-[#9a6d2b]">In progress</span>
+          </div>
+          <div className="mt-4 h-[3px] rounded-full bg-[#ded3bf]">
+            <div className="h-full rounded-full bg-[var(--color-gold)]" style={{ width: `${sampleTrip.progress}%` }} />
+          </div>
+          <div className="mt-2 flex items-center justify-between text-[12px] text-[var(--color-text-mid)]">
+            <span>Booked</span>
+            <span>Darshan</span>
+            <span>Return</span>
+          </div>
+        </Card>
+
         <div>
-          <p className="pb-2 text-[14px] font-medium text-text-dark">Sacred circuits</p>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-[48px] leading-none text-[var(--color-text-dark)]">Sacred circuits</h2>
+            <Link href="/explore" className="text-[14px] text-[#9a6d2b]">See all</Link>
+          </div>
+
           {loading ? (
-            <div className="rounded-card border-[0.5px] border-divider bg-white p-4 text-[12px] text-text-muted">Loading circuits...</div>
+            <Card className="text-[13px] text-[var(--color-text-mid)]">Loading circuits...</Card>
           ) : circuits.length === 0 ? (
-            <div className="rounded-card border-[0.5px] border-divider bg-white p-4 text-[12px] text-text-muted">No circuits available right now.</div>
+            <Card className="text-[13px] text-[var(--color-text-mid)]">No circuits available right now.</Card>
           ) : (
-            <div className="no-scrollbar flex gap-3 overflow-x-auto pb-2">
+            <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
               {circuits.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/destination/${c.id}`}
-                  onClick={() => handleCircuitSelect(c.id)}
-                  className="min-w-[152px] rounded-card border-[0.5px] border-divider bg-white p-2"
-                >
-                  <div className="h-[86px] rounded-[10px]" style={{ background: c.gradient }} />
-                  <p className="pt-2 text-[13px] text-text-dark">{c.name}</p>
-                  <p className="text-[11px] text-text-muted">{c.stops}</p>
-                  <p className="pt-1 text-[11px] text-text-mid">
-                    {c.price} · {c.nights}
-                  </p>
+                <Link key={c.id} href={`/destination/${c.id}`} onClick={() => handleCircuitSelect(c.id)} className="min-w-[178px] rounded-[18px] border-[0.5px] border-[var(--color-divider)] bg-[var(--color-paper)] p-2">
+                  <div className="h-[98px] rounded-[14px]" style={{ background: c.gradient }} />
+                  <p className="pt-2 font-serif text-[38px] leading-none text-[var(--color-text-dark)]">{c.name}</p>
+                  <p className="text-[13px] text-[var(--color-text-mid)]">{c.stops}</p>
+                  <div className="mt-1 flex items-center justify-between text-[13px] text-[var(--color-text-mid)]">
+                    <span className="text-[var(--color-text-dark)]">{c.price}</span>
+                    <span>{c.nights}</span>
+                  </div>
                 </Link>
               ))}
             </div>
           )}
         </div>
 
-        <div className="rounded-card border-[0.5px] border-divider bg-white p-4">
-          <p className="text-[10px] uppercase tracking-[0.1em] text-text-muted">Meera · online</p>
-          <p className="pt-1 text-[13px] text-text-dark">{meera.lastMessage}</p>
-          <Link href="/concierge" className="mt-3 inline-flex min-h-[44px] items-center rounded-[10px] bg-indigo-mid px-4 text-[13px] text-star-white">
-            Open concierge
-          </Link>
-        </div>
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="h-14 w-14 rounded-full border-[0.5px] border-[#d8ccb8] bg-[radial-gradient(circle_at_40%_30%,#f7e6cf,transparent_55%),#f2e6d5]" />
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.15em] text-[var(--color-text-mid)]">Meera · online</p>
+              <p className="pt-1 font-serif text-[34px] leading-tight text-[var(--color-text-dark)]">“{meera.lastMessage}”</p>
+            </div>
+          </div>
+          <ButtonLink href="/concierge" className="mt-4 w-full">Open concierge</ButtonLink>
+        </Card>
       </section>
 
       <div className="fixed bottom-0 left-0 right-0">

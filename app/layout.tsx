@@ -1,18 +1,18 @@
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, DM_Sans, Noto_Sans_Devanagari } from 'next/font/google';
+import { EB_Garamond, Jost, Noto_Sans_Devanagari } from 'next/font/google';
 import './globals.css';
 
-const dmSans = DM_Sans({
+const jost = Jost({
   subsets: ['latin'],
   weight: ['300', '400', '500'],
-  variable: '--font-dm-sans',
+  variable: '--font-jost',
 });
 
-const cormorant = Cormorant_Garamond({
+const ebGaramond = EB_Garamond({
   subsets: ['latin'],
-  weight: ['300', '400'],
+  weight: ['400', '500'],
   style: ['normal', 'italic'],
-  variable: '--font-cormorant',
+  variable: '--font-eb-garamond',
 });
 
 const notoDevanagari = Noto_Sans_Devanagari({
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} ${cormorant.variable} ${notoDevanagari.variable} font-sans`}>
+      <body className={`${jost.variable} ${ebGaramond.variable} ${notoDevanagari.variable} font-sans`}>
         {children}
       </body>
     </html>
