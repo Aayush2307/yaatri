@@ -1,11 +1,45 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { sampleTrip } from '@/lib/mockData';
 
+type JourneyStepId = 'sankalp' | 'plan' | 'darshan';
+
+const journeySteps: {
+  id: JourneyStepId;
+  label: string;
+  title: string;
+  description: string;
+  points: string[];
+}[] = [
+  {
+    id: 'sankalp',
+    label: 'Sankalp',
+    title: 'Begin with intention',
+    description: 'Set the purpose of your yatra before routes, dates, or logistics.',
+    points: ['Who is travelling', 'Why this yatra', 'Family intention'],
+  },
+  {
+    id: 'plan',
+    label: 'Plan',
+    title: 'Align timing and path',
+    description: 'Choose dates, route, pace, and panchang-aware guidance.',
+    points: ['Dates & season', 'Route order', 'Panchang nudge'],
+  },
+  {
+    id: 'darshan',
+    label: 'Darshan',
+    title: 'Arrive prepared',
+    description: 'Understand temple flow, rituals, offerings, and local guidance.',
+    points: ['Temple timing', 'Ritual checklist', 'Meera support'],
+  },
+];
+
 export default function HomePage() {
+  const [activeStep, setActiveStep] = useState<JourneyStepId>('sankalp');
+
   const name = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('yaatri_user') ?? '{}').name || 'Aayush';
@@ -15,6 +49,7 @@ export default function HomePage() {
   }, []);
 
   const activeTrip = sampleTrip || null;
+  const selectedStep = journeySteps.find((step) => step.id === activeStep) || journeySteps[0];
 
   return (
     <main className="min-h-screen bg-[#FAF5EB] text-[#3F2D1F]">
@@ -40,17 +75,40 @@ export default function HomePage() {
             </p>
 
             <div className="pt-5">
-              <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.1em] text-[#8A6C4B]">
-                <span>Sankalp</span>
-                <span>Plan</span>
-                <span>Darshan</span>
+              <div className="grid grid-cols-3 gap-2">
+                {journeySteps.map((step) => {
+                  const isActive = step.id === activeStep;
+                  return (
+                    <button
+                      key={step.id}
+                      type="button"
+                      onClick={() => setActiveStep(step.id)}
+                      className={`rounded-full px-2 py-1.5 text-[11px] uppercase tracking-[0.1em] transition ${
+                        isActive ? 'bg-[#C66A2B] text-[#FFF8EE] shadow-sm' : 'bg-[#EFE2D1] text-[#8A6C4B]'
+                      }`}
+                    >
+                      {step.label}
+                    </button>
+                  );
+                })}
               </div>
               <div className="mt-2 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#C66A2B]" />
                 <span className="h-[2px] flex-1 rounded-full bg-[#DDBE80]" />
-                <span className="h-2 w-2 rounded-full bg-[#DDBE80]" />
-                <span className="h-[2px] flex-1 rounded-full bg-[#EAD8B7]" />
-                <span className="h-2 w-2 rounded-full bg-[#EAD8B7]" />
+                <span className="h-[2px] w-10 rounded-full bg-[#C66A2B]" />
+                <span className="h-[2px] flex-1 rounded-full bg-[#DDBE80]" />
+              </div>
+
+              <div className="mt-3 rounded-2xl bg-[#FFF8EE] p-3">
+                <p className="font-medium text-[#4A3322]">{selectedStep.title}</p>
+                <p className="pt-1 text-xs leading-relaxed text-[#7C624A]">{selectedStep.description}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selectedStep.points.map((point) => (
+                    <span key={point} className="rounded-full bg-[#F3E2CC] px-2.5 py-1 text-[11px] text-[#8A6C4B]">
+                      {point}
+                    </span>
+                  ))}
+                </div>
+                <p className="pt-2 text-[11px] text-[#9A7A57]">Yaatra keeps this simple — no astrology overload.</p>
               </div>
             </div>
           </div>
