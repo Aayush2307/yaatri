@@ -1,157 +1,130 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { circuits } from '@/lib/mockData';
+import { usePlan } from '@/hooks/usePlan';
+import type { SuggestedCircuit } from '@/types/yaatra';
 
-const paceOptions = ['Easy', 'Balanced', 'Packed'] as const;
+const CIRCUIT_LABEL: Record<SuggestedCircuit, string> = {
+  char_dham: 'Char Dham Circuit',
+  jyotirlinga: 'Jyotirlinga Circuit',
+  shakti_peethas: 'Shakti Peethas Circuit',
+};
 
 export default function PlanPage() {
-  const [selected, setSelected] = useState(circuits[0].id);
-  const [sankalp, setSankalp] = useState('');
-  const [city, setCity] = useState('');
-  const [dates, setDates] = useState('');
-  const [travellers, setTravellers] = useState('');
-  const [pace, setPace] = useState<(typeof paceOptions)[number]>('Balanced');
+  const [circuit, setCircuit] = useState<SuggestedCircuit | null>(null);
+
+  useEffect(() => {
+    const y = JSON.parse(localStorage.getItem('yaatra_yatra') || '{}');
+    setCircuit((y.circuit as SuggestedCircuit) ?? 'char_dham');
+  }, []);
+
+  if (!circuit) return null;
+
+  return <PlanPhase circuit={circuit} />;
+}
+
+function PlanPhase({ circuit }: { circuit: SuggestedCircuit }) {
+  const router = useRouter();
+  const { route, tirths, toggleTirth, plannedDays, departureDate, setDepartureDate, confirmPlan, plannedTirths } = usePlan(circuit);
+
+  const selectedKm = useMemo(
+    () => tirths.filter((t) => t.status === 'planned').reduce((sum, t) => sum + (t.distanceFromPrev || 0), 0),
+    [tirths],
+  );
 
   return (
     <main className="min-h-screen bg-[#F5F0E8] pb-24 text-[#2B2119]">
       <div className="mx-auto max-w-md px-4 pt-6">
         <section>
-          <p className="text-sm tracking-[0.12em] text-[#8A7665]">Plan Your Yatra</p>
-          <h1 className="pt-2 font-serif text-4xl leading-tight">Turn your sankalp into a clear journey.</h1>
-          <p className="pt-3 text-sm leading-relaxed text-[#8A7665]">
-            Share a few details and we’ll shape a simple path from intent to darshan.
-          </p>
+          <p className="text-sm text-[#8A7665]">Sankalp</p>
+          <div className="mt-2 flex items-center justify-between">
+            <h1 className="font-serif text-[44px] leading-none">{CIRCUIT_LABEL[circuit]}</h1>
+            <span className="rounded-full bg-[#F2E0C8] px-4 py-1 text-sm text-[#A65A22]">Plan</span>
+          </div>
+          <p className="pt-2 text-sm text-[#8A7665]">Select the dhams for your Yatra.</p>
+        </section>
 
-          <div className="mt-5 rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-3 shadow-sm">
-            <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.1em] text-[#8A7665]">
-              <span>Sankalp</span>
-              <span>Dates</span>
-              <span>Family</span>
-              <span>Darshan</span>
-            </div>
-            <div className="mt-2 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-[#C66A2B]" />
-              <span className="h-[2px] flex-1 rounded-full bg-[#DDBE80]" />
-              <span className="h-2 w-2 rounded-full bg-[#DDBE80]" />
-              <span className="h-[2px] flex-1 rounded-full bg-[#E9D7B6]" />
-              <span className="h-2 w-2 rounded-full bg-[#E9D7B6]" />
-              <span className="h-[2px] flex-1 rounded-full bg-[#F1E5D1]" />
-              <span className="h-2 w-2 rounded-full bg-[#F1E5D1]" />
+        <section className="mt-5 grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
+            <p className="text-5xl leading-none">{plannedDays}</p>
+            <p className="pt-1 text-sm text-[#6E6256]">days planned</p>
+          </div>
+          <div className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
+            <p className="text-5xl leading-none">{plannedTirths.length} / {route.tirths.length}</p>
+            <p className="pt-1 text-sm text-[#6E6256]">dhams selected</p>
+          </div>
+        </section>
+
+        <section className="mt-6">
+          <p className="text-xs uppercase tracking-[0.12em] text-[#8A7665]">Route</p>
+          <div className="relative mt-3 pl-6">
+            <div className="absolute bottom-6 left-[11px] top-3 w-px bg-[rgba(43,33,25,0.18)]" />
+            <div className="space-y-3">
+              {tirths.map((tirth, idx) => {
+                const isPlanned = tirth.status === 'planned';
+                return (
+                  <div key={tirth.id}>
+                    <div className="relative">
+                      <span className={`absolute -left-6 top-6 h-3 w-3 rounded-full ${isPlanned ? 'bg-[#C67C1D]' : 'bg-[#CFBCA3]'}`} />
+                      <button
+                        type="button"
+                        onClick={() => toggleTirth(tirth.id)}
+                        className={`w-full rounded-3xl border p-4 text-left shadow-sm ${
+                          isPlanned
+                            ? 'border-[#C67C1D] bg-[#F5E9D3]'
+                            : 'border-[rgba(43,33,25,0.12)] bg-[#FFFCF7]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-2xl leading-tight">{tirth.name}</p>
+                            <p className="pt-1 text-sm text-[#8A5A1A]">{tirth.deity} · {tirth.state}</p>
+                          </div>
+                          <span className="rounded-full bg-[#EDC173] px-3 py-1 text-sm text-[#5B3E1D]">{tirth.recommendedDays} days</span>
+                        </div>
+                        <p className="pt-2 text-[34px] leading-tight text-[#6A4314]">{tirth.significance}</p>
+                      </button>
+                    </div>
+                    {idx > 0 && <p className="px-1 pt-2 text-sm text-[#7C746A]">{tirth.distanceFromPrev} km from previous</p>}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
 
         <section className="mt-6 rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
-          <div className="space-y-4">
-            <label className="block">
-              <span className="text-xs text-[#8A7665]">Sankalp / intention</span>
-              <input
-                value={sankalp}
-                onChange={(e) => setSankalp(e.target.value)}
-                placeholder="e.g., Family darshan with a peaceful pace"
-                className="mt-1.5 min-h-[44px] w-full rounded-xl border border-[rgba(43,33,25,0.12)] bg-[#FFFDF9] px-3 text-sm outline-none focus:border-[#C66A2B]"
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-xs text-[#8A7665]">Starting city</span>
-              <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="e.g., Delhi"
-                className="mt-1.5 min-h-[44px] w-full rounded-xl border border-[rgba(43,33,25,0.12)] bg-[#FFFDF9] px-3 text-sm outline-none focus:border-[#C66A2B]"
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-xs text-[#8A7665]">Dates or “Need guidance”</span>
-              <input
-                value={dates}
-                onChange={(e) => setDates(e.target.value)}
-                placeholder="e.g., 12–15 June or Need guidance"
-                className="mt-1.5 min-h-[44px] w-full rounded-xl border border-[rgba(43,33,25,0.12)] bg-[#FFFDF9] px-3 text-sm outline-none focus:border-[#C66A2B]"
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-xs text-[#8A7665]">Travellers / family</span>
-              <input
-                value={travellers}
-                onChange={(e) => setTravellers(e.target.value)}
-                placeholder="e.g., 2 adults, 1 child"
-                className="mt-1.5 min-h-[44px] w-full rounded-xl border border-[rgba(43,33,25,0.12)] bg-[#FFFDF9] px-3 text-sm outline-none focus:border-[#C66A2B]"
-              />
-            </label>
-
-            <div>
-              <p className="text-xs text-[#8A7665]">Pace</p>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {paceOptions.map((option) => {
-                  const isActive = option === pace;
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setPace(option)}
-                      className={`min-h-[40px] rounded-xl border text-xs ${
-                        isActive
-                          ? 'border-[#C66A2B] bg-[#F8E6CE] text-[#8C4B1E]'
-                          : 'border-[rgba(43,33,25,0.12)] bg-[#FFFDF9] text-[#8A7665]'
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <p className="pb-2 text-xs text-[#8A7665]">Sacred route</p>
-              <div className="space-y-2">
-                {circuits.map((c) => {
-                  const isSelected = selected === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setSelected(c.id)}
-                      className={`w-full rounded-xl border p-3 text-left shadow-sm ${
-                        isSelected
-                          ? 'border-[#C66A2B] bg-[#F8E6CE]/70'
-                          : 'border-[rgba(43,33,25,0.12)] bg-[#FFFCF7]'
-                      }`}
-                    >
-                      <p className="text-sm text-[#2B2119]">{c.name}</p>
-                      <p className="text-xs text-[#8A7665]">{c.stops} · {c.nights}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <button type="button" className="mt-5 inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-[#C66A2B] px-4 text-sm font-medium text-[#FFF8EE] shadow-sm">
-            Create Yatra Plan
-          </button>
-
-          <Link href="/concierge" className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] px-4 text-sm text-[#8C4B1E]">
-            Ask Meera to help
-          </Link>
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-[34px]">Departure</span>
+            <input
+              type="date"
+              value={departureDate ?? ''}
+              onChange={(e) => setDepartureDate(e.target.value || null)}
+              className="min-h-[44px] flex-1 rounded-xl border border-[rgba(43,33,25,0.15)] bg-[#FFFCF7] px-3 text-sm"
+            />
+          </label>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
-          <p className="font-serif text-xl">Not sure about dates or rituals?</p>
-          <p className="pt-2 text-sm leading-relaxed text-[#8A7665]">
-            Meera can help choose the right timing, temple order, and family-friendly pace.
-          </p>
-          <Link href="/concierge" className="mt-3 inline-flex min-h-[42px] items-center text-sm font-medium text-[#C66A2B]">
-            Talk to Meera →
-          </Link>
-        </section>
+        <button
+          type="button"
+          disabled={plannedTirths.length < 1}
+          onClick={() => {
+            confirmPlan();
+            router.push('/home');
+          }}
+          className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center rounded-2xl border border-[rgba(43,33,25,0.2)] bg-[#FFFCF7] px-4 text-sm disabled:opacity-50"
+        >
+          Confirm {plannedTirths.length} dhams · {plannedDays} days →
+        </button>
+
+        <p className="pt-3 text-center text-xs text-[#8A7665]">Distance selected: {selectedKm} km · Season guidance: May–October.</p>
+
+        <Link href="/concierge" className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl text-sm text-[#A45C22]">
+          Ask Meera for guidance
+        </Link>
       </div>
 
       <div className="fixed bottom-0 left-0 right-0"><BottomNav active="plan" /></div>
