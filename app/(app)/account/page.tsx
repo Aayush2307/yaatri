@@ -1,88 +1,162 @@
 'use client';
 
-import Link from 'next/link';
-import { useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 
+type TravelStyle = 'Budget' | 'Comfortable' | 'Premium';
+type StayPref = 'Dharamshala' | 'Standard hotel' | 'Premium hotel' | 'Ashram stay';
+type FoodPref = 'Satvik' | 'Jain' | 'Regular vegetarian';
+type Mobility = 'None' | 'Wheelchair support' | 'Minimal walking preferred' | 'Senior-friendly itinerary';
+type Duration = '2–3 days' | '4–7 days' | '8–12 days' | 'Flexible';
+
+type YatraProfile = {
+  name: string;
+  phone: string;
+  homeCity: string;
+  preferredLanguage: string;
+  travellersCount: string;
+  travellingWith: string[];
+  mobilityNeeds: Mobility;
+  travelStyle: TravelStyle;
+  stayPreference: StayPref;
+  foodPreference: FoodPref;
+  interestedYatras: string[];
+  preferredSeason: string;
+  tripDuration: Duration;
+  specialNotes: string;
+};
+
+const defaultProfile: YatraProfile = {
+  name: '',
+  phone: '',
+  homeCity: '',
+  preferredLanguage: '',
+  travellersCount: '',
+  travellingWith: [],
+  mobilityNeeds: 'None',
+  travelStyle: 'Comfortable',
+  stayPreference: 'Standard hotel',
+  foodPreference: 'Satvik',
+  interestedYatras: [],
+  preferredSeason: '',
+  tripDuration: 'Flexible',
+  specialNotes: '',
+};
+
+function Chip({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1.5 text-xs transition ${
+        active ? 'border-[#C66A2B] bg-[#F2E0C8] text-[#7A4A24]' : 'border-[rgba(43,33,25,0.16)] bg-[#FFFCF7] text-[#7A6A5A]'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function AccountPage() {
-  const router = useRouter();
-  const user = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('yaatri_user') ?? '{}');
-    } catch {
-      return {};
+  const [profile, setProfile] = useState<YatraProfile>(defaultProfile);
+  const [savedAt, setSavedAt] = useState<string>('');
+
+  useEffect(() => {
+    const stored = localStorage.getItem('yaatra_profile');
+    const user = localStorage.getItem('yaatri_user');
+    const parsedUser = user ? JSON.parse(user) : {};
+
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setProfile({ ...defaultProfile, ...parsed, name: parsed.name || parsedUser.name || '', phone: parsed.phone || parsedUser.phone || '' });
+    } else {
+      setProfile((prev) => ({ ...prev, name: parsedUser.name || '', phone: parsedUser.phone || '' }));
     }
   }, []);
 
-  const initials = (user.name || 'Y').slice(0, 1).toUpperCase();
-  const language = user.language || 'Not set yet';
-  const familyTravellers = user.familyTravellers || user.family || 'Not set yet';
-  const homeCity = user.homeCity || user.city || 'Not set yet';
-  const savedYatras = Array.isArray(user.savedYatras) ? user.savedYatras.length : user.savedYatras || 'Not set yet';
+  const initials = useMemo(() => (profile.name || 'Y').trim().slice(0, 1).toUpperCase(), [profile.name]);
+
+  const toggleValue = (field: 'travellingWith' | 'interestedYatras', value: string) => {
+    setProfile((prev) => ({
+      ...prev,
+      [field]: prev[field].includes(value) ? prev[field].filter((v) => v !== value) : [...prev[field], value],
+    }));
+  };
+
+  const saveProfile = () => {
+    localStorage.setItem('yaatra_profile', JSON.stringify(profile));
+    setSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+  };
+
+  const shareWithMeera = () => {
+    const number = process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') || '919999999999';
+    const summary = `Namaste Meera, sharing my Yatra Profile:\nName: ${profile.name || '-'}\nPhone: ${profile.phone || '-'}\nHome city: ${profile.homeCity || '-'}\nLanguage: ${profile.preferredLanguage || '-'}\nTravellers: ${profile.travellersCount || '-'}\nTravelling with: ${profile.travellingWith.join(', ') || '-'}\nMobility needs: ${profile.mobilityNeeds}\nTravel style: ${profile.travelStyle}\nStay preference: ${profile.stayPreference}\nFood preference: ${profile.foodPreference}\nInterested yatras: ${profile.interestedYatras.join(', ') || '-'}\nPreferred season/month: ${profile.preferredSeason || '-'}\nTrip duration: ${profile.tripDuration}\nSpecial notes: ${profile.specialNotes || '-'}`;
+    window.open(`https://wa.me/${number}?text=${encodeURIComponent(summary)}`, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <main className="min-h-screen bg-[#F5F0E8] pb-24 text-[#2B2119]">
-      <div className="mx-auto max-w-md px-4 pt-6">
+      <div className="mx-auto max-w-md space-y-4 px-4 pt-6">
         <section>
           <p className="text-sm tracking-[0.12em] text-[#8A7665]">Account</p>
-          <h1 className="pt-2 font-serif text-4xl leading-tight">Your yatra preferences, kept simple.</h1>
+          <h1 className="pt-2 font-serif text-4xl leading-tight">Your Yatra Profile</h1>
           <p className="pt-3 text-sm leading-relaxed text-[#8A7665]">
-            Manage how Yaatra supports your family’s sacred journeys.
+            Help Meera understand your family, travel needs, and preferences before planning your sacred journey.
           </p>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F2E2CB] text-lg font-medium text-[#A65A22]">{initials}</div>
-            <div>
-              <p className="text-base font-medium text-[#2B2119]">{user.name || 'Yaatri User'}</p>
-              <p className="text-xs text-[#8A7665]">Yaatra companion</p>
-            </div>
+        <section className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
+          <div className="mb-3 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F2E2CB] text-[#A65A22]">{initials}</div>
+            <p className="text-sm text-[#7A6A5A]">Yaatra Travel Profile</p>
           </div>
-          <p className="pt-3 text-xs text-[#8A7665]">{user.phone || '+91XXXXXXXXXX'}</p>
-        </section>
-
-        <section className="mt-6 space-y-3">
-          <div className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-[0.1em] text-[#8A7665]">Language</p>
-            <p className="pt-1 text-sm text-[#2B2119]">{language}</p>
-          </div>
-          <div className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-[0.1em] text-[#8A7665]">Family travellers</p>
-            <p className="pt-1 text-sm text-[#2B2119]">{familyTravellers}</p>
-          </div>
-          <div className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-[0.1em] text-[#8A7665]">Home city</p>
-            <p className="pt-1 text-sm text-[#2B2119]">{homeCity}</p>
-          </div>
-          <div className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-[0.1em] text-[#8A7665]">Saved yatras</p>
-            <p className="pt-1 text-sm text-[#2B2119]">{savedYatras}</p>
+          <div className="space-y-3">
+            <input value={profile.name} onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))} placeholder="Name" className="w-full rounded-xl border border-[rgba(43,33,25,0.12)] bg-white px-3 py-2 text-sm" />
+            <input value={profile.phone} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} placeholder="Phone number" className="w-full rounded-xl border border-[rgba(43,33,25,0.12)] bg-white px-3 py-2 text-sm" />
+            <input value={profile.homeCity} onChange={(e) => setProfile((p) => ({ ...p, homeCity: e.target.value }))} placeholder="Home city" className="w-full rounded-xl border border-[rgba(43,33,25,0.12)] bg-white px-3 py-2 text-sm" />
+            <input value={profile.preferredLanguage} onChange={(e) => setProfile((p) => ({ ...p, preferredLanguage: e.target.value }))} placeholder="Preferred language" className="w-full rounded-xl border border-[rgba(43,33,25,0.12)] bg-white px-3 py-2 text-sm" />
           </div>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
-          <p className="font-serif text-xl">Need help with a yatra?</p>
-          <p className="pt-2 text-sm leading-relaxed text-[#8A7665]">
-            Meera can help with rituals, timing, routes, and family needs.
-          </p>
-          <Link href="/concierge" className="mt-3 inline-flex min-h-[42px] items-center text-sm font-medium text-[#C66A2B]">
-            Talk to Meera →
-          </Link>
+        <section className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
+          <h2 className="font-serif text-xl">Family & Travellers</h2>
+          <input value={profile.travellersCount} onChange={(e) => setProfile((p) => ({ ...p, travellersCount: e.target.value }))} placeholder="Number of travellers" className="mt-3 w-full rounded-xl border border-[rgba(43,33,25,0.12)] bg-white px-3 py-2 text-sm" />
+          <div className="mt-3 flex flex-wrap gap-2">{['Parents', 'Children', 'Senior citizens', 'Couple', 'Solo'].map((v) => <Chip key={v} label={v} active={profile.travellingWith.includes(v)} onClick={() => toggleValue('travellingWith', v)} />)}</div>
+          <p className="mt-4 text-xs text-[#8A7665]">Any mobility needs?</p>
+          <div className="mt-2 flex flex-wrap gap-2">{(['None', 'Wheelchair support', 'Minimal walking preferred', 'Senior-friendly itinerary'] as Mobility[]).map((v) => <Chip key={v} label={v} active={profile.mobilityNeeds === v} onClick={() => setProfile((p) => ({ ...p, mobilityNeeds: v }))} />)}</div>
         </section>
 
-        <button
-          type="button"
-          className="mt-6 w-full min-h-[44px] rounded-xl border border-[rgba(43,33,25,0.25)] bg-[#FFF8EE] text-sm text-[#7B4B2A]"
-          onClick={() => {
-            localStorage.removeItem('yaatri_token');
-            localStorage.removeItem('yaatri_user');
-            router.push('/');
-          }}
-        >
-          Sign out
-        </button>
+        <section className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
+          <h2 className="font-serif text-xl">Travel Comfort</h2>
+          <p className="mt-3 text-xs text-[#8A7665]">Travel style</p>
+          <div className="mt-2 flex flex-wrap gap-2">{(['Budget', 'Comfortable', 'Premium'] as TravelStyle[]).map((v) => <Chip key={v} label={v} active={profile.travelStyle === v} onClick={() => setProfile((p) => ({ ...p, travelStyle: v }))} />)}</div>
+          <p className="mt-3 text-xs text-[#8A7665]">Stay preference</p>
+          <div className="mt-2 flex flex-wrap gap-2">{(['Dharamshala', 'Standard hotel', 'Premium hotel', 'Ashram stay'] as StayPref[]).map((v) => <Chip key={v} label={v} active={profile.stayPreference === v} onClick={() => setProfile((p) => ({ ...p, stayPreference: v }))} />)}</div>
+          <p className="mt-3 text-xs text-[#8A7665]">Food preference</p>
+          <div className="mt-2 flex flex-wrap gap-2">{(['Satvik', 'Jain', 'Regular vegetarian'] as FoodPref[]).map((v) => <Chip key={v} label={v} active={profile.foodPreference === v} onClick={() => setProfile((p) => ({ ...p, foodPreference: v }))} />)}</div>
+        </section>
+
+        <section className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
+          <h2 className="font-serif text-xl">Yatra Preferences</h2>
+          <div className="mt-3 flex flex-wrap gap-2">{['Char Dham', 'Jyotirlinga', 'Shakti Peethas', 'Pitru Tarpan', 'Family temple visit'].map((v) => <Chip key={v} label={v} active={profile.interestedYatras.includes(v)} onClick={() => toggleValue('interestedYatras', v)} />)}</div>
+          <input value={profile.preferredSeason} onChange={(e) => setProfile((p) => ({ ...p, preferredSeason: e.target.value }))} placeholder="Preferred season/month" className="mt-3 w-full rounded-xl border border-[rgba(43,33,25,0.12)] bg-white px-3 py-2 text-sm" />
+          <p className="mt-3 text-xs text-[#8A7665]">Approx trip duration</p>
+          <div className="mt-2 flex flex-wrap gap-2">{(['2–3 days', '4–7 days', '8–12 days', 'Flexible'] as Duration[]).map((v) => <Chip key={v} label={v} active={profile.tripDuration === v} onClick={() => setProfile((p) => ({ ...p, tripDuration: v }))} />)}</div>
+        </section>
+
+        <section className="rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 shadow-sm">
+          <h2 className="font-serif text-xl">Special Notes</h2>
+          <textarea
+            value={profile.specialNotes}
+            onChange={(e) => setProfile((p) => ({ ...p, specialNotes: e.target.value }))}
+            placeholder="E.g. travelling with parents, need less walking, prefer peaceful darshan timings..."
+            className="mt-3 min-h-[96px] w-full rounded-xl border border-[rgba(43,33,25,0.12)] bg-white px-3 py-2 text-sm"
+          />
+        </section>
+
+        <button onClick={saveProfile} type="button" className="w-full rounded-xl bg-[#C66A2B] py-3 text-sm font-medium text-[#FFF8EE]">Save Yatra Profile</button>
+        <button onClick={shareWithMeera} type="button" className="w-full rounded-xl border border-[rgba(43,33,25,0.2)] bg-[#FFF8EE] py-3 text-sm text-[#7B4B2A]">Share with Meera</button>
+        {savedAt && <p className="text-center text-xs text-[#8A7665]">Saved at {savedAt}</p>}
       </div>
       <div className="fixed bottom-0 left-0 right-0"><BottomNav active="account" /></div>
     </main>
