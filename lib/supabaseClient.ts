@@ -1,19 +1,25 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-const isBrowser = typeof window !== 'undefined';
-const publicKey = supabasePublishableKey || supabaseAnonKey;
-
-export const supabaseClient: SupabaseClient | null =
-  isBrowser && supabaseUrl && publicKey
-    ? createClient(supabaseUrl, publicKey, {
-        auth: { persistSession: false },
-      })
-    : null;
+let cachedClient: SupabaseClient | null | undefined;
 
 export function getSupabaseClient(): SupabaseClient | null {
-  return supabaseClient;
+  if (cachedClient !== undefined) {
+    return cachedClient;
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const publicKey = publishableKey || anonKey;
+
+  if (!supabaseUrl || !publicKey) {
+    cachedClient = null;
+    return cachedClient;
+  }
+
+  cachedClient = createClient(supabaseUrl, publicKey, {
+    auth: { persistSession: false },
+  });
+
+  return cachedClient;
 }
