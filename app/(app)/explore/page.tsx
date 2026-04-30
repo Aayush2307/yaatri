@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { sacredCircuits } from '@/lib/mockData';
 import BackButton from '@/components/BackButton';
+import { openMeeraWhatsApp } from '@/lib/whatsapp';
 
 function CircuitImage({ src, alt }: { src?: string; alt: string }) {
   const [errored, setErrored] = useState(false);
@@ -39,9 +40,6 @@ export default function ExplorePage() {
     }
     router.push('/plan');
   };
-
-  const meeraNumber = process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') || '919999999999';
-  const meeraLink = `https://wa.me/${meeraNumber}?text=${encodeURIComponent('Namaste Meera, help me choose the right yatra for my sankalp, family, dates, and starting city.')}`;
 
   return (
     <main className="min-h-screen bg-[#F5F0E8] pb-24 text-[#2B2119]">
@@ -94,7 +92,7 @@ export default function ExplorePage() {
           <p className="pt-2 text-sm leading-relaxed text-[#8A7665]">
             Meera can help you choose the right yatra based on your sankalp, family, dates, and starting city.
           </p>
-          <button type="button" onClick={() => window.open(meeraLink, '_blank', 'noopener,noreferrer')} className="mt-3 text-sm font-medium text-[#C4671A]">
+          <button type="button" onClick={() => openMeeraWhatsApp('Namaste Meera, help me choose the right yatra for my sankalp, family, dates, and starting city.')} className="mt-3 text-sm font-medium text-[#C4671A]">
             Talk to Meera
           </button>
         </section>

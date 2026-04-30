@@ -1,18 +1,23 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-let cachedClient: SupabaseClient | null = null;
+let cachedClient: SupabaseClient | null | undefined;
 
 export function getSupabaseClient(): SupabaseClient | null {
-  if (cachedClient) return cachedClient;
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key) {
-    return null;
+  if (cachedClient !== undefined) {
+    return cachedClient;
   }
 
-  cachedClient = createClient(url, key, {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const publicKey = publishableKey || anonKey;
+
+  if (!supabaseUrl || !publicKey) {
+    cachedClient = null;
+    return cachedClient;
+  }
+
+  cachedClient = createClient(supabaseUrl, publicKey, {
     auth: { persistSession: false },
   });
 

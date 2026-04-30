@@ -2,8 +2,8 @@
 
 import { BottomNav } from '@/components/layout/BottomNav';
 import BackButton from '@/components/BackButton';
+import { buildMeeraWhatsAppUrl } from '@/lib/whatsapp';
 
-const fallbackNumber = '910000000000';
 const defaultPrompt = 'Namaste Meera, I need help planning my yatra';
 
 const promptChips = [
@@ -13,8 +13,7 @@ const promptChips = [
 ];
 
 function buildWhatsAppLink(message: string) {
-  const configuredNumber = process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') || fallbackNumber;
-  return `https://wa.me/${configuredNumber}?text=${encodeURIComponent(message)}`;
+  return buildMeeraWhatsAppUrl(message);
 }
 
 export default function ConciergePage() {
