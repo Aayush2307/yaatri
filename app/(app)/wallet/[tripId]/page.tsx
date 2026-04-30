@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { sampleTrip } from '@/lib/mockData';
+import BackButton from '@/components/BackButton';
 
 export default function WalletTripPage() {
   const params = useParams<{ tripId: string }>();
@@ -9,6 +10,7 @@ export default function WalletTripPage() {
   return (
     <main className="min-h-screen bg-bg-surface px-5 pb-10 pt-6">
       <div className="mx-auto max-w-md space-y-3">
+        <BackButton />
         <div className="rounded-card bg-[linear-gradient(155deg,#1A1630_0%,#2D2660_55%,#3D3480_100%)] p-4 text-star-white">
           <p className="text-[11px] uppercase tracking-[0.1em] text-star-white/60">Trip wallet</p>
           <p className="pt-1 font-serif text-[26px] font-light italic">{sampleTrip.name}</p>

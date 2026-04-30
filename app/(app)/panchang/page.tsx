@@ -2,11 +2,13 @@
 
 import { BottomNav } from '@/components/layout/BottomNav';
 import { panchangCard } from '@/lib/mockData';
+import BackButton from '@/components/BackButton';
 
 export default function PanchangPage() {
   return (
     <main className="min-h-screen bg-bg-surface px-5 pb-24 pt-6">
       <div className="mx-auto max-w-md space-y-3">
+        <BackButton />
         <header className="rounded-card bg-indigo-deepest p-4 text-star-white">
           <p className="text-[10px] uppercase tracking-[0.1em] text-amethyst">Today&apos;s panchang</p>
           <p className="pt-1 font-serif text-[22px] font-light italic">{panchangCard.tithi}</p>

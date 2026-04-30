@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { circuits } from '@/lib/mockData';
+import BackButton from '@/components/BackButton';
 
 export default function DestinationPage() {
   const params = useParams<{ id: string }>();
@@ -12,6 +13,7 @@ export default function DestinationPage() {
   return (
     <main className="min-h-screen bg-bg-surface px-5 pb-24 pt-6">
       <div className="mx-auto max-w-md space-y-3">
+        <BackButton />
         <div className="rounded-card p-4 text-star-white" style={{ background: destination.gradient }}>
           <p className="font-serif text-[28px] font-light italic">{destination.name}</p>
           <p className="text-[12px] text-star-white/75">{destination.stops}</p>

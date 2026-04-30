@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { charDham } from '@/lib/mockData';
+import BackButton from '@/components/BackButton';
 
 export default function CharDhamPage() {
   return (
     <main className="min-h-screen bg-[#F5F0E8] pb-24 text-[#2B2119]">
       <div className="mx-auto max-w-md px-4 pt-6">
+        <BackButton />
         <section className="rounded-2xl bg-[#FFFCF7] p-5 shadow-sm">
           <p className="text-sm tracking-[0.12em] text-[#8A7665]">Sacred circuit</p>
           <h1 className="pt-2 font-serif text-4xl leading-tight">Char Dham Yatra</h1>

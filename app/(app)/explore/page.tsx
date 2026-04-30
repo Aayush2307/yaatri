@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { sacredCircuits } from '@/lib/mockData';
+import BackButton from '@/components/BackButton';
 
 function CircuitImage({ src, alt }: { src?: string; alt: string }) {
   const [errored, setErrored] = useState(false);
@@ -45,6 +46,7 @@ export default function ExplorePage() {
   return (
     <main className="min-h-screen bg-[#F5F0E8] pb-24 text-[#2B2119]">
       <div className="mx-auto max-w-md px-4 pt-6">
+        <BackButton />
         <section>
           <p className="text-sm tracking-[0.12em] text-[#8A7665]">Explore Yatras</p>
           <h1 className="pt-2 font-serif text-4xl leading-tight">Where does your sankalp call you?</h1>

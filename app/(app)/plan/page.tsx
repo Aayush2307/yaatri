@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { CHAR_DHAM_ROUTE } from '@/data/routes';
+import BackButton from '@/components/BackButton';
 
 const MEERA_WHATSAPP_NUMBER = 'REPLACE_WITH_NUMBER';
 
@@ -31,6 +32,7 @@ export default function PlanPage() {
   return (
     <main className="min-h-screen bg-[#F5F0E8] pb-44 text-[#2B2119]">
       <div className="mx-auto max-w-md px-4 pt-6">
+        <BackButton />
         <section>
           <p className="text-sm tracking-[0.12em] text-[#8A7665]">Plan</p>
           <h1 className="pt-2 font-serif text-4xl leading-tight">Char Dham Yatra</h1>
