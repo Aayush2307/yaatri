@@ -78,7 +78,7 @@ export default function AccountPage() {
           onClick={() => {
             localStorage.removeItem('yaatri_token');
             localStorage.removeItem('yaatri_user');
-            router.push('/welcome');
+            router.push('/');
           }}
         >
           Sign out

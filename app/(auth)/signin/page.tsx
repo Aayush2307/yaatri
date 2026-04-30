@@ -42,7 +42,7 @@ export default function SignInPage() {
 
         <p className="text-center text-[12px] text-text-muted">
           New to Yaatri?{' '}
-          <Link href="/welcome" className="text-amethyst">
+          <Link href="/" className="text-amethyst">
             Create account
           </Link>
         </p>

@@ -10,7 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem('yaatri_token');
     if (!token) {
-      router.replace('/welcome');
+      router.replace('/');
     }
   }, [router, pathname]);
 
