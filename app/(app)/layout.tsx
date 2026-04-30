@@ -1,18 +1,9 @@
-'use client';
-
-import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    const token = localStorage.getItem('yaatri_token');
-    if (!token) {
-      router.replace('/');
-    }
-  }, [router, pathname]);
-
-  return <>{children}</>;
+  return (
+    <div className="min-h-[100dvh] bg-[#F5F0E8]">
+      <div className="mx-auto w-full max-w-[430px] min-h-[100dvh] bg-[#F5F0E8]">
+        {children}
+      </div>
+    </div>
+  );
 }

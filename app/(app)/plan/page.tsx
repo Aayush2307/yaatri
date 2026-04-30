@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import BackButton from '@/components/BackButton';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 
 type TravelStyle = 'Budget' | 'Comfort' | 'Premium';
 
@@ -101,9 +102,9 @@ export default function PlanPage() {
 
   const selectedYatraTitle = useMemo(() => draft.selectedCircuitTitle?.trim(), [draft.selectedCircuitTitle]);
 
-  const configuredNumber = process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') || MEERA_WHATSAPP_NUMBER;
+  const configuredNumber = process.env.NEXT_PUBLIC_MEERA_WHATSAPP_NUMBER?.replace(/\D/g, '') || process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') || MEERA_WHATSAPP_NUMBER;
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const latestDraft = { ...draft, updatedAt: new Date().toISOString() };
     setDraft(latestDraft);
     localStorage.setItem(DRAFT_KEY, JSON.stringify(latestDraft));
@@ -124,12 +125,34 @@ export default function PlanPage() {
       'Please guide me with route, darshan timing, stays, vehicle planning, and family-friendly pacing.',
     ].join('\n');
 
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('yatra_plan_requests').insert({
+          selected_circuit: latestDraft.selectedCircuit || null,
+          selected_circuit_title: latestDraft.selectedCircuitTitle || null,
+          sankalp: latestDraft.sankalp,
+          sankalp_note: latestDraft.sankalpNote || null,
+          starting_city: latestDraft.startingCity || null,
+          travel_dates: latestDraft.travelDates || null,
+          travellers: latestDraft.travellers || null,
+          travelling_with: latestDraft.travellingWith,
+          comfort_needs: latestDraft.comfortNeeds,
+          travel_style: latestDraft.travelStyle || null,
+          created_at: new Date().toISOString(),
+        });
+      } catch {
+        // keep WhatsApp handoff resilient even if sync fails
+      }
+    }
+
     const whatsappHref = `https://wa.me/${configuredNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappHref, '_blank', 'noopener,noreferrer');
   };
 
   return (
-    <main className="min-h-screen bg-[#F5F0E8] pb-44 text-[#2B2119]">
+    <main className="min-h-[100dvh] overflow-x-hidden bg-[#F5F0E8] pb-44 text-[#2B2119]">
       <div className="mx-auto max-w-md px-4 pt-6">
         <BackButton />
 

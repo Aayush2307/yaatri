@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import BackButton from '@/components/BackButton';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 
 type TravelStyle = 'Budget' | 'Comfortable' | 'Premium';
 type StayPref = 'Dharamshala' | 'Standard hotel' | 'Premium hotel' | 'Ashram stay';
@@ -61,6 +62,7 @@ function Chip({ active, label, onClick }: { active: boolean; label: string; onCl
 export default function AccountPage() {
   const [profile, setProfile] = useState<YatraProfile>(defaultProfile);
   const [savedAt, setSavedAt] = useState<string>('');
+  const [saveMessage, setSaveMessage] = useState<string>('');
 
   useEffect(() => {
     const stored = localStorage.getItem('yaatra_profile');
@@ -84,19 +86,44 @@ export default function AccountPage() {
     }));
   };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     localStorage.setItem('yaatra_profile', JSON.stringify(profile));
     setSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    setSaveMessage('Saved on this device.');
+
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setSaveMessage('Saved on this device. Online sync will retry later.');
+      return;
+    }
+
+    try {
+      const storedId = localStorage.getItem('yaatri_profile_id');
+      const payload = { ...profile, updated_at: new Date().toISOString() };
+
+      if (storedId) {
+        const { error } = await supabase.from('yatra_profiles').update(payload).eq('id', storedId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from('yatra_profiles').insert(payload).select('id').single();
+        if (error) throw error;
+        if (data?.id) localStorage.setItem('yaatri_profile_id', String(data.id));
+      }
+
+      setSaveMessage('Saved on this device and synced online.');
+    } catch {
+      setSaveMessage('Saved on this device. Online sync will retry later.');
+    }
   };
 
   const shareWithMeera = () => {
-    const number = process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') || '919999999999';
+    const number = process.env.NEXT_PUBLIC_MEERA_WHATSAPP_NUMBER?.replace(/\D/g, '') || process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') || 'REPLACE_WITH_NUMBER';
     const summary = `Namaste Meera, sharing my Yatra Profile:\nName: ${profile.name || '-'}\nPhone: ${profile.phone || '-'}\nHome city: ${profile.homeCity || '-'}\nLanguage: ${profile.preferredLanguage || '-'}\nTravellers: ${profile.travellersCount || '-'}\nTravelling with: ${profile.travellingWith.join(', ') || '-'}\nMobility needs: ${profile.mobilityNeeds}\nTravel style: ${profile.travelStyle}\nStay preference: ${profile.stayPreference}\nFood preference: ${profile.foodPreference}\nInterested yatras: ${profile.interestedYatras.join(', ') || '-'}\nPreferred season/month: ${profile.preferredSeason || '-'}\nTrip duration: ${profile.tripDuration}\nSpecial notes: ${profile.specialNotes || '-'}`;
     window.open(`https://wa.me/${number}?text=${encodeURIComponent(summary)}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
-    <main className="min-h-screen bg-[#F5F0E8] pb-24 text-[#2B2119]">
+    <main className="min-h-[100dvh] overflow-x-hidden bg-[#F5F0E8] pb-28 text-[#2B2119]">
       <div className="mx-auto max-w-md space-y-4 px-4 pt-6">
         <BackButton />
 
@@ -160,6 +187,7 @@ export default function AccountPage() {
         <button onClick={saveProfile} type="button" className="w-full rounded-xl bg-[#C66A2B] py-3 text-sm font-medium text-[#FFF8EE]">Save Yatra Profile</button>
         <button onClick={shareWithMeera} type="button" className="w-full rounded-xl border border-[rgba(43,33,25,0.2)] bg-[#FFF8EE] py-3 text-sm text-[#7B4B2A]">Share with Meera</button>
         {savedAt && <p className="text-center text-xs text-[#8A7665]">Saved at {savedAt}</p>}
+        {saveMessage && <p className="text-center text-xs text-[#8A7665]">{saveMessage}</p>}
       </div>
       <div className="fixed bottom-0 left-0 right-0"><BottomNav active="account" /></div>
     </main>
