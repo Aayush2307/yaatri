@@ -2,6 +2,9 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { SANKALPS } from '@/data/sankalps';
+import { useYatra } from '@/hooks/useYatra';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { sampleTrip } from '@/lib/mockData';
 
@@ -40,6 +43,9 @@ const journeySteps: {
 export default function HomePage() {
   const [activeStep, setActiveStep] = useState<JourneyStepId>('sankalp');
 
+  const router = useRouter();
+  const { yatra, selectSankalp, advanceToPlan } = useYatra();
+
   const name = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('yaatri_user') ?? '{}').name || 'Aayush';
@@ -50,6 +56,20 @@ export default function HomePage() {
 
   const activeTrip = sampleTrip || null;
   const selectedStep = journeySteps.find((step) => step.id === activeStep) || journeySteps[0];
+
+  const selectedSankalp = SANKALPS.find((item) => item.id === yatra.sankalpId) || null;
+  const circuitLabelMap = {
+    shakti_peethas: 'Shakti Peetha',
+    char_dham: 'Char Dham',
+    jyotirlinga: 'Jyotirlinga',
+  } as const;
+
+  const circuitMetaMap = {
+    shakti_peethas: '51 peethas',
+    char_dham: '4 dhams',
+    jyotirlinga: '12 temples',
+  } as const;
+
 
   return (
     <main className="min-h-screen bg-[#FAF5EB] text-[#3F2D1F]">
@@ -139,6 +159,52 @@ export default function HomePage() {
                 Talk to her →
               </Link>
             </div>
+          </div>
+
+          <div className="rounded-2xl bg-[#F5F0E8] p-5 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.12em] text-[#8A7665]">Choose your sankalp</p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {SANKALPS.map((sankalp) => {
+                const isSelected = yatra.sankalpId === sankalp.id;
+                const circuit = circuitLabelMap[sankalp.suggestedCircuit];
+                const circuitMeta = circuitMetaMap[sankalp.suggestedCircuit];
+                return (
+                  <button
+                    key={sankalp.id}
+                    type="button"
+                    onClick={() => selectSankalp(sankalp)}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      isSelected
+                        ? 'border-[#C66A2B] bg-[#F5E7D3] shadow-sm ring-1 ring-[#DDBE80]'
+                        : 'border-[rgba(43,33,25,0.12)] bg-[#FFFCF7]'
+                    }`}
+                  >
+                    <p className="font-medium text-[#2B2119]">{sankalp.label}</p>
+                    <p className="pt-1 text-sm leading-relaxed text-[#8A7665]">{sankalp.description}</p>
+                    {isSelected && <p className="mt-2 inline-flex rounded-full bg-[#EDC173] px-2.5 py-1 text-xs text-[#5A3A20]">{circuit} · {circuitMeta}</p>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedSankalp && (
+              <div className="mt-4 rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 transition">
+                <p className="text-sm text-[#6E5642]">{circuitLabelMap[selectedSankalp.suggestedCircuit]} · {circuitMetaMap[selectedSankalp.suggestedCircuit]}</p>
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <p className="text-[34px] font-light leading-none">Begin your {circuitLabelMap[selectedSankalp.suggestedCircuit]} Yatra</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      advanceToPlan();
+                      router.push('/plan');
+                    }}
+                    className="inline-flex min-h-[42px] items-center rounded-xl border border-[rgba(43,33,25,0.25)] bg-white px-4 text-sm"
+                  >
+                    Begin →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {activeTrip && (
