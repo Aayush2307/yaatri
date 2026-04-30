@@ -1,6 +1,7 @@
 'use client';
 
 import { BottomNav } from '@/components/layout/BottomNav';
+import BackButton from '@/components/BackButton';
 
 const notifications = [
   { id: 'n1', title: 'Muhurat window held', body: 'Meera reserved Friday Brahma Muhurta slot for your yatra.', time: '2m ago' },
@@ -12,6 +13,7 @@ export default function NotificationsPage() {
   return (
     <main className="min-h-screen bg-bg-surface px-5 pb-24 pt-6">
       <div className="mx-auto max-w-md space-y-3">
+        <BackButton />
         <header className="rounded-card bg-indigo-deepest p-4 text-star-white">
           <p className="font-serif text-[28px] font-light">Notifications</p>
         </header>

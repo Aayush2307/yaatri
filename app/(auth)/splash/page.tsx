@@ -12,7 +12,7 @@ export default function SplashPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       const token = localStorage.getItem('yaatri_token');
-      router.replace(token ? '/home' : '/welcome');
+      router.replace(token ? '/home' : '/');
     }, 2200);
     return () => clearTimeout(timer);
   }, [router]);

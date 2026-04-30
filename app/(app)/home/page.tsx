@@ -2,21 +2,16 @@
 
 import Link from 'next/link';
 import { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { SANKALPS } from '@/data/sankalps';
+import { useYatra } from '@/hooks/useYatra';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { LogoMark } from '@/components/icons/LogoMark';
-import { MandalaWatermark } from '@/components/icons/MandalaWatermark';
+import { YaatriLogo } from '@/components/YaatriLogo';
 import { sampleTrip } from '@/lib/mockData';
-import { useEffect, useMemo, useState } from 'react';
-import { circuits, meera, panchangCard, sampleTrip } from '@/lib/mockData';
-
 
 export default function HomePage() {
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 220);
-    return () => clearTimeout(timer);
-  }, []);
+  const router = useRouter();
+  const { yatra, selectSankalp } = useYatra();
 
   const name = useMemo(() => {
     try {
@@ -27,200 +22,133 @@ export default function HomePage() {
   }, []);
 
   const activeTrip = sampleTrip || null;
+  const selectedSankalp = SANKALPS.find((item) => item.id === yatra.sankalpId) || null;
 
-  return (
-    <main className="min-h-screen bg-bg-surface pb-24">
-      <section className="relative overflow-hidden bg-indigo-deepest px-5 pb-6 pt-6 text-star-white">
-        <MandalaWatermark className="pointer-events-none absolute -right-12 -top-12 h-[220px] w-[220px] opacity-[0.06]" />
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex items-center gap-2"><LogoMark className="h-8 w-8" /><span className="text-[14px] tracking-[0.18em]">YAATRI</span></div>
-          <Link href="/account" className="h-8 w-8 rounded-full bg-amethyst/25 text-center text-[12px] leading-8">{name[0] || 'A'}</Link>
-        </div>
-        <p className="pt-5 text-[10px] uppercase tracking-[0.1em] text-gold-warm">Namaste, {name}</p>
-        <h1 className="pt-2 font-serif text-[30px] font-light leading-[1.18]">Where does your <span className="italic text-amethyst">sankalp</span> call you?</h1>
-        <p className="pt-2 text-[13px] text-star-white/80">Every sacred journey begins with a single intention.</p>
-      </section>
-
-      <section className="space-y-3 px-5 pt-4">
-        <div className="rounded-card border-[0.5px] border-divider bg-white px-4 py-3">
-          <p className="text-[12px] font-medium text-text-dark">Kartik Purnima is in 6 days</p>
-          <p className="pt-1 text-[11px] text-text-muted">Auspicious for river yatras</p>
-        </div>
-
-        <div className="rounded-card border-[0.5px] border-divider bg-white p-4">
-          <p className="text-[10px] uppercase tracking-[0.1em] text-text-muted">Self-guided</p>
-          <p className="pt-1 text-[18px] font-medium text-text-dark">Explore Yatras</p>
-          <p className="pt-1 text-[13px] text-text-mid">Browse circuits, destinations &amp; sacred routes. Plan at your own pace.</p>
-          <Link href="/explore" className="mt-3 inline-flex min-h-[44px] items-center text-[13px] text-indigo-mid">Begin your yatra →</Link>
-        </div>
-
-        <div className="rounded-card border-[0.5px] border-divider bg-white p-4">
-          <p className="text-[10px] uppercase tracking-[0.1em] text-text-muted">Personal concierge</p>
-          <p className="pt-1 text-[18px] font-medium text-text-dark">Talk to Meera</p>
-          <p className="pt-1 text-[13px] text-text-mid">Get guidance on rituals, darshan timing &amp; trip planning. She&apos;ll guide you.</p>
-          <Link href="/concierge" className="mt-3 inline-flex min-h-[44px] items-center text-[13px] text-indigo-mid">Start a conversation →</Link>
-        </div>
-
-        {activeTrip && (
-          <div className="rounded-card border-[0.5px] border-divider bg-white px-4 py-3">
-            <p className="text-[10px] uppercase tracking-[0.1em] text-text-muted">Your yatra</p>
-            <p className="pt-1 text-[13px] text-text-dark">{activeTrip.name}</p>
-            <p className="text-[11px] text-text-muted">{activeTrip.dates}</p>
-          </div>
-        )}
-=======
-      return JSON.parse(localStorage.getItem('yaatri_user') ?? '{}').name || 'Aayush Prajapati';
-    } catch {
-      return 'Aayush Prajapati';
-    }
-  }, []);
-
-  const handleCircuitSelect = (id: string) => {
-    localStorage.setItem('yaatri_selected_circuit', id);
+  const routeForSankalp = (circuit: string) => {
+    if (circuit === 'char_dham') return '/plan';
+    if (circuit === 'shakti_peethas') return '/explore/shakti-peethas';
+    if (circuit === 'jyotirlinga') return '/explore';
+    return '/explore';
   };
 
+  const circuitLabelMap = {
+    shakti_peethas: 'Shakti Peetha',
+    char_dham: 'Char Dham',
+    jyotirlinga: 'Jyotirlinga',
+  } as const;
+
+  const circuitMetaMap = {
+    shakti_peethas: '51 peethas',
+    char_dham: '4 dhams',
+    jyotirlinga: '12 temples',
+  } as const;
+
   return (
-    <main className="min-h-screen bg-[#F5F0E8] pb-24 text-[#2B2119]">
-      <header className="flex items-center justify-between bg-[#FBF8F2] px-5 py-4">
-        <div className="flex items-center gap-2">
-          <span className="text-[20px] text-[#C6A25D]">•</span>
-          <span className="font-serif text-[42px] tracking-[0.12em]">YAATRI</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link href="/notifications" aria-label="Notifications" className="flex h-10 w-10 items-center justify-center rounded-full border-[0.5px] border-[rgba(43,33,25,0.22)] text-[17px] text-[#7A6554]">
-            bell
-          </Link>
-          <Link href="/account" className="flex h-10 w-10 items-center justify-center rounded-full border-[0.5px] border-[rgba(43,33,25,0.24)] bg-[#ECE3D4] text-[14px] text-[#4E4033]">
-            AP
-          </Link>
-        </div>
-      </header>
-
-      <section
-        className="px-5 pb-7 pt-7 text-[#FAF5EB]"
-        style={{
-          background:
-            'radial-gradient(circle at 84% 22%, rgba(198,162,93,0.09), transparent 40%), linear-gradient(160deg, #1C110D 0%, #291813 62%, #1D120F 100%)',
-        }}
-      >
-        <p className="text-[11px] uppercase tracking-[0.2em] text-[#DDBE80]">GOOD MORNING, {name}</p>
-        <h1 className="pt-4 font-serif text-[56px] leading-[1.07] text-[#FAF5EB]">
-          From <span className="italic text-[#DDBE80]">sankalp</span> to darshan — every step held.
-        </h1>
-
-        <Link href="/panchang" className="mt-6 flex items-center gap-3 rounded-[18px] border-[0.5px] border-[rgba(198,162,93,0.45)] bg-[rgba(255,255,255,0.04)] px-4 py-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border-[0.5px] border-[rgba(198,162,93,0.6)] text-[#DDBE80]">☾</span>
-          <span>
-            <span className="block text-[15px] text-[#FAF2E5]">
-              {panchangCard.tithi} · {panchangCard.sanskrit}
-            </span>
-            <span className="block pt-0.5 text-[13px] text-[#CCB38E]">{panchangCard.muhurat}</span>
-          </span>
-        </Link>
-      </section>
-
-      <section className="space-y-6 px-5 pt-5">
-        <div className="grid grid-cols-2 gap-3">
-          <Link href="/plan" className="flex min-h-[44px] items-center justify-center rounded-[12px] border-[0.5px] border-[rgba(43,33,25,0.32)] text-[18px]">
-            Plan my yatra
-          </Link>
-          <Link href="/concierge" className="flex min-h-[44px] items-center justify-center rounded-[12px] border-[0.5px] border-[rgba(43,33,25,0.32)] text-[18px]">
-            Concierge
-          </Link>
-        </div>
-
-        <section className="rounded-[18px] border-[0.5px] border-[rgba(198,162,93,0.5)] bg-[#FFFCF7] p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.15em] text-[#9A6D2B]">ACTIVE YATRA</p>
-              <p className="font-serif text-[42px] leading-none text-[#2D2118]">{sampleTrip.name}</p>
-              <p className="pt-1 text-[14px] text-[#7A6554]">12 Jun – 16 Jun · 4 nights</p>
-            </div>
-            <span className="rounded-full border-[0.5px] border-[#D9C28F] bg-[#F1E5CC] px-3 py-1 text-[13px] text-[#9A6D2B]">In progress</span>
+    <main className="min-h-screen bg-[#FAF5EB] text-[#3F2D1F]">
+      <div className="mx-auto max-w-md px-4 pb-24 pt-6">
+        <header className="mb-6 flex items-start justify-between">
+          <div>
+            <YaatriLogo size="sm" />
+            <p className="pt-1 text-sm text-[#6E5642]">Namaste, {name}</p>
           </div>
+          <Link
+            href="/account"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E7D5BF] text-sm font-medium text-[#7A542F] shadow-sm"
+          >
+            {name[0] || 'A'}
+          </Link>
+        </header>
 
-          <div className="mt-4 h-[3px] rounded-full bg-[#DFD4C1]">
-            <div className="h-full rounded-full bg-[#C6A25D]" style={{ width: `${sampleTrip.progress}%` }} />
-          </div>
-          <div className="mt-2 flex items-center justify-between text-[12px] text-[#7A6554]">
-            <span>Booked</span>
-            <span>Darshan</span>
-            <span>Return</span>
-          </div>
-        </section>
+        <section className="space-y-6">
+          <div className="rounded-2xl bg-[#F5F0E8] p-5 shadow-sm">
+            <h1 className="font-serif text-4xl leading-tight text-[#4A3322]">Your family&apos;s yatra starts right here.</h1>
+            <p className="pt-3 text-sm leading-relaxed text-[#6E5642]">
+              Begin with intention, move with clarity, and reach darshan with peace at every step.
+            </p>
 
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-serif text-[46px] leading-none">Sacred circuits</h2>
-            <Link href="/explore" className="text-[14px] text-[#9A6D2B]">
-              See all
-            </Link>
-          </div>
-
-          {loading ? (
-            <div className="rounded-[18px] border-[0.5px] border-[rgba(43,33,25,0.22)] bg-[#FFFCF7] p-4 text-[13px] text-[#7A6554]">Loading circuits...</div>
-          ) : (
-            <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
-              {circuits.map((c) => (
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl bg-gradient-to-br from-[#C66A2B] to-[#D48A4F] p-5 text-[#FFF8EE] shadow-md">
+                <p className="text-xs uppercase tracking-[0.12em] text-[#FDE9CC]">Primary</p>
+                <h2 className="pt-2 text-2xl font-semibold leading-tight">Explore Yatras</h2>
+                <p className="pt-2 text-sm leading-relaxed text-[#FBE8D0]">Discover sacred routes and begin at your own rhythm.</p>
                 <Link
-                  key={c.id}
-                  href={`/destination/${c.id}`}
-                  onClick={() => handleCircuitSelect(c.id)}
-                  className="min-w-[188px] rounded-[18px] border-[0.5px] border-[rgba(43,33,25,0.25)] bg-[#FFFCF7]"
+                  href="/explore"
+                  className="mt-4 inline-flex min-h-[42px] items-center rounded-xl bg-[#FFF4E4] px-4 text-sm font-medium text-[#A4541E]"
                 >
-                  <div className="h-[102px] rounded-t-[18px]" style={{ background: c.gradient }} />
-                  <div className="p-3">
-                    <p className="font-serif text-[36px] leading-none text-[#2D2118]">{c.name}</p>
-                    <p className="text-[13px] text-[#7A6554]">{c.stops}</p>
-                    <div className="mt-1 flex items-center justify-between text-[13px] text-[#7A6554]">
-                      <span className="text-[#2D2118]">{c.price}</span>
-                      <span>{c.nights}</span>
-                    </div>
-                  </div>
+                  Explore →
                 </Link>
-              ))}
+              </div>
+
+              <div className="rounded-2xl bg-[#FFF8EE] p-5 shadow-sm">
+                <p className="text-xs uppercase tracking-[0.12em] text-[#8B6A4B]">Personal concierge</p>
+                <h2 className="pt-2 text-2xl font-semibold leading-tight text-[#4A3322]">Talk to Meera</h2>
+                <p className="pt-2 text-sm text-[#6E5642]">Online now</p>
+                <Link href="/concierge" className="mt-4 inline-flex min-h-[42px] items-center text-sm font-medium text-[#A45C22]">
+                  Talk to her →
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-[#FFF8EE] px-4 py-3 shadow-sm">
+            <p className="text-xs font-medium text-[#7A5C3E]">Kartik Purnima is in 6 days</p>
+            <p className="pt-1 text-xs text-[#8E7256]">Auspicious for river yatras</p>
+          </div>
+
+          <div className="rounded-2xl bg-[#F5F0E8] p-5 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.12em] text-[#8A7665]">Choose your Sankalp</p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {SANKALPS.map((sankalp) => {
+                const isSelected = yatra.sankalpId === sankalp.id;
+                const circuit = circuitLabelMap[sankalp.suggestedCircuit];
+                const circuitMeta = circuitMetaMap[sankalp.suggestedCircuit];
+                return (
+                  <button
+                    key={sankalp.id}
+                    type="button"
+                    onClick={() => selectSankalp(sankalp)}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      isSelected
+                        ? 'border-[#C66A2B] bg-[#F5E7D3] shadow-sm ring-1 ring-[#DDBE80]'
+                        : 'border-[rgba(43,33,25,0.12)] bg-[#FFFCF7]'
+                    }`}
+                  >
+                    <p className="font-medium text-[#2B2119]">{sankalp.label}</p>
+                    <p className="pt-1 text-sm leading-relaxed text-[#8A7665]">{sankalp.description}</p>
+                    {isSelected && <p className="mt-2 inline-flex rounded-full bg-[#EDC173] px-2.5 py-1 text-xs text-[#5A3A20]">{circuit} · {circuitMeta}</p>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedSankalp && (
+              <div className="mt-4 rounded-2xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 transition">
+                <p className="text-sm text-[#6E5642]">{circuitLabelMap[selectedSankalp.suggestedCircuit]} · {circuitMetaMap[selectedSankalp.suggestedCircuit]}</p>
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <p className="text-xl leading-tight">Begin your {circuitLabelMap[selectedSankalp.suggestedCircuit]} Yatra</p>
+                  <button
+                    type="button"
+                    onClick={() => router.push(routeForSankalp(selectedSankalp.suggestedCircuit))}
+                    className="inline-flex min-h-[42px] items-center rounded-xl border border-[rgba(43,33,25,0.25)] bg-white px-4 text-sm"
+                  >
+                    Begin →
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {activeTrip && (
+            <div className="rounded-xl bg-[#FFF8EE] px-4 py-3 shadow-sm">
+              <p className="text-[11px] uppercase tracking-[0.1em] text-[#8B6A4B]">Your yatra</p>
+              <p className="pt-1 text-sm text-[#4A3322]">{activeTrip.name}</p>
+              <p className="text-xs text-[#8E7256]">{activeTrip.dates}</p>
             </div>
           )}
         </section>
+      </div>
 
-        <section className="rounded-[18px] border-[0.5px] border-[rgba(43,33,25,0.25)] bg-[#FFFCF7] p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-14 w-14 rounded-full border-[0.5px] border-[#D8CCB8] bg-[radial-gradient(circle_at_40%_30%,#F7E6CF,transparent_55%),#F2E6D5]" />
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.15em] text-[#7A6554]">Meera · online</p>
-              <p className="pt-1 font-serif text-[32px] leading-tight text-[#2D2118]">“{meera.lastMessage}”</p>
-            </div>
-          </div>
-          <Link href="/concierge" className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-[12px] border-[0.5px] border-[rgba(43,33,25,0.32)] text-[18px]">
-            Open concierge
-          </Link>
-        </section>
->>>>>>> master
-      </section>
-
-      <nav className="fixed bottom-0 left-0 right-0 border-t-[0.5px] border-[rgba(43,33,25,0.22)] bg-[#F5F0E8] px-3 pb-5 pt-2.5">
-        <ul className="grid grid-cols-4 gap-1">
-          <li className="flex min-h-[44px] flex-col items-center justify-center gap-1.5 text-[#2B2119]">
-            <span>⌂</span>
-            <span className="text-[10px] tracking-[0.06em]">Home</span>
-            <span className="h-1.5 w-1.5 rounded-full bg-[#C6A25D]" />
-          </li>
-          <li className="flex min-h-[44px] flex-col items-center justify-center gap-1.5 text-[#7D6A59]">
-            <span>⌕</span>
-            <span className="text-[10px] tracking-[0.06em]">Explore</span>
-          </li>
-          <li className="flex min-h-[44px] flex-col items-center justify-center gap-1.5 text-[#7D6A59]">
-            <span>☷</span>
-            <span className="text-[10px] tracking-[0.06em]">Yatras</span>
-          </li>
-          <li className="flex min-h-[44px] flex-col items-center justify-center gap-1.5 text-[#7D6A59]">
-            <span>◌</span>
-            <span className="text-[10px] tracking-[0.06em]">Profile</span>
-          </li>
-        </ul>
-      </nav>
+      <div className="fixed bottom-0 left-0 right-0"><BottomNav active="home" /></div>
     </main>
   );
 }
-

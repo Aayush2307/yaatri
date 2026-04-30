@@ -30,7 +30,7 @@ export function BottomNav({ active }: BottomNavProps) {
   );
 
   return (
-    <nav className="border-t-[0.5px] border-divider bg-white px-3 pb-5 pt-2.5">
+    <nav className="mx-auto w-full max-w-[430px] border-t-[0.5px] border-divider bg-white px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2.5">
       <ul className="grid grid-cols-5 gap-1">
         {tabs.map((tab) => {
           const isActive = tab.key === active;
