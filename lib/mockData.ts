@@ -191,3 +191,110 @@ export const sampleTrip = {
   dates: '12 Jun – 16 Jun',
   progress: 64,
 };
+
+
+export type ExploreCircuit = {
+  id: string;
+  title: string;
+  subtitle: string;
+  tradition: string;
+  count: string;
+  primaryDeity: string;
+  regions: string;
+  recommendedFor: string;
+  duration: string;
+  bestSeason: string;
+  significance: string;
+  tags: string[];
+  image: string;
+  imagePrompt: string;
+  href: string;
+};
+
+export const exploreCircuits: ExploreCircuit[] = [
+  {
+    id: 'jyotirlinga',
+    title: 'Jyotirlinga',
+    subtitle: 'The twelve sacred lights of Shiva',
+    tradition: 'Shaiva',
+    count: '12 temples',
+    primaryDeity: 'Lord Shiva',
+    regions: 'West, Central & South Bharat',
+    recommendedFor: 'Shiva sadhana and moksha seekers',
+    duration: '12–18 days',
+    bestSeason: 'Oct–Mar',
+    significance: 'A pan-Bharat path through the twelve jyotirlinga kshetras of Shiva.',
+    tags: ['Moksha', 'Shiva', 'Temple Circuit'],
+    image: '/images/yatras/jyotirlinga.jpg',
+    imagePrompt: 'A cinematic devotional photograph of an ancient Shiva temple at dawn, soft mist, warm lamps, stone architecture, calm pilgrims, premium spiritual travel mood, no text',
+    href: '/explore',
+  },
+  {
+    id: 'shakti-peethas',
+    title: '51 Shakti Peethas',
+    subtitle: 'Sacred Devi energy centers across Bharat',
+    tradition: 'Shakta',
+    count: '51 sites',
+    primaryDeity: 'Devi Shakti',
+    regions: 'North, East, West & South Bharat',
+    recommendedFor: 'Shakti upasana and healing journeys',
+    duration: 'Phased multi-trip',
+    bestSeason: 'Varies by region',
+    significance: 'A sacred geography rooted in the Devi-Shakti parampara and peetha lore.',
+    tags: ['Devi', 'Shakti', 'Energy Centers'],
+    image: '/images/yatras/shakti-peetha.jpg',
+    imagePrompt: 'A serene sacred Devi temple courtyard with red flowers, brass lamps, soft golden light, Indian spiritual atmosphere, elegant devotional travel photography, no text',
+    href: '/explore/shakti-peethas',
+  },
+  {
+    id: 'char-dham',
+    title: 'Char Dham',
+    subtitle: 'Four Himalayan abodes of purification and liberation',
+    tradition: 'Himalayan Dharma',
+    count: '4 dhams',
+    primaryDeity: 'Yamuna, Ganga, Shiva, Vishnu',
+    regions: 'Uttarakhand Himalaya',
+    recommendedFor: 'Foundational pilgrimage seekers',
+    duration: '10–12 days',
+    bestSeason: 'May–Oct',
+    significance: 'The classic high-altitude yatra through Yamunotri, Gangotri, Kedarnath, and Badrinath.',
+    tags: ['Himalaya', 'Purification', 'Moksha'],
+    image: '/images/yatras/char-dham.jpg',
+    imagePrompt: 'A Himalayan temple yatra scene with snow peaks, prayer flags, stone path, soft sunrise, pilgrims walking peacefully, premium devotional photography, no text',
+    href: '/explore/char-dham',
+  },
+  {
+    id: 'pitru-tarpan',
+    title: 'Pitru Tarpan · Sacred Waters',
+    subtitle: 'Ritual offerings by rivers and moksha ghats',
+    tradition: 'Shraddha Parampara',
+    count: 'Multi-ghat route',
+    primaryDeity: 'Ancestors & sacred waters',
+    regions: 'Ganga belt & key river ghats',
+    recommendedFor: 'Pitru shanti and remembrance rites',
+    duration: '4–7 days',
+    bestSeason: 'Pitru Paksha & winter',
+    significance: 'A guided path for ancestral offerings in sacred river traditions.',
+    tags: ['Pitru', 'Ritual', 'River'],
+    image: '/images/yatras/pitru-tarpan.jpg',
+    imagePrompt: 'A peaceful sacred river ghat at sunrise with diya lamps floating on water, priests performing rituals in the distance, calm golden atmosphere, no text',
+    href: '/plan',
+  },
+  {
+    id: 'family-yatra',
+    title: 'Family Yatra',
+    subtitle: 'Balanced darshan journeys for all age groups',
+    tradition: 'Grihastha Dharma',
+    count: 'Flexible circuit',
+    primaryDeity: 'Varies by family sankalp',
+    regions: 'Pan-Bharat',
+    recommendedFor: 'Families with elders and children',
+    duration: '3–8 days',
+    bestSeason: 'School breaks & mild weather',
+    significance: 'Comfort-first devotional routes with paced travel, darshan slots, and family support.',
+    tags: ['Family', 'Comfort', 'Guided'],
+    image: '/images/yatras/family-yatra.jpg',
+    imagePrompt: 'An Indian family walking together toward a temple entrance at sunrise, warm devotional mood, premium spiritual travel photography, no text',
+    href: '/plan',
+  },
+];
