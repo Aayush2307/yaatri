@@ -21,7 +21,7 @@
     "firebase-admin": "^12",
     "framer-motion": "^11",
     "jsonwebtoken": "^9",
-    "next": "14.2.0",
+    "next": "^14.2.35",
     "next-pwa": "^5",
     "postcss": "^8",
     "prisma": "^5",
@@ -36,6 +36,8 @@
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
-    "@types/react-dom": "^18"
+    "@types/react-dom": "^18",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.0"
   }
 }
