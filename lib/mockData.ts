@@ -193,108 +193,132 @@ export const sampleTrip = {
 };
 
 
-export type ExploreCircuit = {
+export type SacredCircuit = {
   id: string;
   title: string;
-  subtitle: string;
   tradition: string;
-  count: string;
-  primaryDeity: string;
-  regions: string;
-  recommendedFor: string;
+  count?: string;
+  primaryDeity?: string;
+  regions: string[];
+  recommendedFor: string[];
   duration: string;
-  bestSeason: string;
+  difficulty: 'Easy' | 'Moderate' | 'Challenging';
+  bestSeason?: string;
+  routeStyle: 'Single city' | 'Regional circuit' | 'Multi-state' | 'Himalayan route';
   significance: string;
+  routeSummary?: string;
+  planningNotes: string[];
+  meeraCanHelpWith: string[];
   tags: string[];
-  image: string;
-  imagePrompt: string;
+  image?: string;
+  imagePrompt?: string;
   href: string;
 };
 
-export const exploreCircuits: ExploreCircuit[] = [
-  {
-    id: 'jyotirlinga',
-    title: 'Jyotirlinga',
-    subtitle: 'The twelve sacred lights of Shiva',
-    tradition: 'Shaiva',
-    count: '12 temples',
-    primaryDeity: 'Lord Shiva',
-    regions: 'West, Central & South Bharat',
-    recommendedFor: 'Shiva sadhana and moksha seekers',
-    duration: '12–18 days',
-    bestSeason: 'Oct–Mar',
-    significance: 'A pan-Bharat path through the twelve jyotirlinga kshetras of Shiva.',
-    tags: ['Moksha', 'Shiva', 'Temple Circuit'],
-    image: '/images/yatras/jyotirlinga.jpg',
-    imagePrompt: 'A cinematic devotional photograph of an ancient Shiva temple at dawn, soft mist, warm lamps, stone architecture, calm pilgrims, premium spiritual travel mood, no text',
-    href: '/explore',
-  },
-  {
-    id: 'shakti-peethas',
-    title: '51 Shakti Peethas',
-    subtitle: 'Sacred Devi energy centers across Bharat',
-    tradition: 'Shakta',
-    count: '51 sites',
-    primaryDeity: 'Devi Shakti',
-    regions: 'North, East, West & South Bharat',
-    recommendedFor: 'Shakti upasana and healing journeys',
-    duration: 'Phased multi-trip',
-    bestSeason: 'Varies by region',
-    significance: 'A sacred geography rooted in the Devi-Shakti parampara and peetha lore.',
-    tags: ['Devi', 'Shakti', 'Energy Centers'],
-    image: '/images/yatras/shakti-peetha.jpg',
-    imagePrompt: 'A serene sacred Devi temple courtyard with red flowers, brass lamps, soft golden light, Indian spiritual atmosphere, elegant devotional travel photography, no text',
-    href: '/explore/shakti-peethas',
-  },
+export const sacredCircuits: SacredCircuit[] = [
   {
     id: 'char-dham',
-    title: 'Char Dham',
-    subtitle: 'Four Himalayan abodes of purification and liberation',
-    tradition: 'Himalayan Dharma',
+    title: 'Char Dham Yatra',
+    tradition: 'Himalayan Moksha Path',
     count: '4 dhams',
-    primaryDeity: 'Yamuna, Ganga, Shiva, Vishnu',
-    regions: 'Uttarakhand Himalaya',
-    recommendedFor: 'Foundational pilgrimage seekers',
+    primaryDeity: 'Yamuna Devi, Ganga Devi, Shiva, Vishnu',
+    regions: ['Uttarakhand', 'Himalayas'],
+    recommendedFor: ['Moksha', 'Family Yatra', 'Vishnu Darshan', 'Once-in-a-lifetime pilgrimage'],
     duration: '10–12 days',
+    difficulty: 'Challenging',
     bestSeason: 'May–Oct',
-    significance: 'The classic high-altitude yatra through Yamunotri, Gangotri, Kedarnath, and Badrinath.',
-    tags: ['Himalaya', 'Purification', 'Moksha'],
+    routeStyle: 'Himalayan route',
+    routeSummary: 'Yamunotri → Gangotri → Kedarnath → Badrinath',
+    significance: 'A sacred Himalayan progression through river origins, Shiva darshan, and Vishnu darshan.',
+    planningNotes: ['Traditionally completed in clockwise order.', 'Weather, road conditions, and altitude need careful planning.', 'Senior citizens and families should plan rest days.', 'Darshan timing and hotel locations matter.'],
+    meeraCanHelpWith: ['Route sequencing', 'Senior-friendly pacing', 'Stays and vehicle planning', 'Darshan timing'],
+    tags: ['Moksha', 'Himalayas', 'Family', '10–12 days'],
     image: '/images/yatras/char-dham.jpg',
     imagePrompt: 'A Himalayan temple yatra scene with snow peaks, prayer flags, stone path, soft sunrise, pilgrims walking peacefully, premium devotional photography, no text',
     href: '/explore/char-dham',
   },
   {
+    id: 'jyotirlinga',
+    title: 'Jyotirlinga',
+    tradition: 'Shiva Path',
+    count: '12 jyotirlingas',
+    primaryDeity: 'Shiva',
+    regions: ['Across Bharat'],
+    recommendedFor: ['Shiva Darshan', 'Moksha', 'Spiritual discipline', 'Regional temple circuits'],
+    duration: '2–12 days',
+    difficulty: 'Moderate',
+    bestSeason: 'Year-round, varies by region',
+    routeStyle: 'Multi-state',
+    routeSummary: 'Plan one region at a time or complete all 12 over multiple journeys.',
+    significance: 'Walk the path of Shiva through twelve sacred jyotirlinga traditions across Bharat.',
+    planningNotes: ['Can be planned region-wise.', 'Good for shorter or phased yatras.', 'Some temples can be combined into multi-day circuits.', 'Best route depends on starting city.'],
+    meeraCanHelpWith: ['Choosing the right jyotirlinga circuit', 'Route grouping', 'Darshan timing', 'Family-friendly pacing'],
+    tags: ['Shiva', '12 temples', 'Moksha', 'Flexible'],
+    image: '/images/yatras/jyotirlinga.jpg',
+    imagePrompt: 'A cinematic devotional photograph of an ancient Shiva temple at dawn, soft mist, warm lamps, stone architecture, calm pilgrims, premium spiritual travel mood, no text',
+    href: '/explore/jyotirlinga',
+  },
+  {
+    id: 'shakti-peethas',
+    title: '51 Shakti Peethas',
+    tradition: 'Devi / Shakti Path',
+    count: '51 sacred seats',
+    primaryDeity: 'Devi',
+    regions: ['Across Bharat'],
+    recommendedFor: ['Shakti', 'Protection', 'Grace', 'Family blessings', 'Devi upasana'],
+    duration: '2–10 days',
+    difficulty: 'Moderate',
+    bestSeason: 'Year-round, varies by region',
+    routeStyle: 'Regional circuit',
+    routeSummary: 'Best planned region-wise based on starting city and sankalp.',
+    significance: 'A living map of Devi traditions rooted in sacred geography, devotion, and Shakti.',
+    planningNotes: ['Region-wise planning is recommended.', 'Some peethas are easier for families and elders.', 'Temple timing and local rituals vary.', 'Good for protection, healing, and Devi sankalp.'],
+    meeraCanHelpWith: ['Region-based Shakti Peetha planning', 'Temple selection', 'Local ritual guidance', 'Family-friendly travel support'],
+    tags: ['Devi', 'Shakti', '51 sites', 'Energy centers'],
+    image: '/images/yatras/shakti-peetha.jpg',
+    imagePrompt: 'A serene sacred Devi temple courtyard with red flowers, brass lamps, soft golden light, Indian spiritual atmosphere, elegant devotional travel photography, no text',
+    href: '/explore/shakti-peethas',
+  },
+  {
     id: 'pitru-tarpan',
-    title: 'Pitru Tarpan · Sacred Waters',
-    subtitle: 'Ritual offerings by rivers and moksha ghats',
-    tradition: 'Shraddha Parampara',
-    count: 'Multi-ghat route',
-    primaryDeity: 'Ancestors & sacred waters',
-    regions: 'Ganga belt & key river ghats',
-    recommendedFor: 'Pitru shanti and remembrance rites',
-    duration: '4–7 days',
-    bestSeason: 'Pitru Paksha & winter',
-    significance: 'A guided path for ancestral offerings in sacred river traditions.',
-    tags: ['Pitru', 'Ritual', 'River'],
+    title: 'Pitru Tarpan',
+    tradition: 'Sacred Waters',
+    count: 'Ritual-focused yatra',
+    primaryDeity: 'Ancestors / Sacred rivers',
+    regions: ['Gaya', 'Haridwar', 'Prayagraj', 'Varanasi', 'Rameswaram'],
+    recommendedFor: ['Ancestor peace', 'Family gratitude', 'Pitru shanti', 'Sacred water rituals'],
+    duration: '1–3 days',
+    difficulty: 'Easy',
+    bestSeason: 'Pitru Paksha or family-chosen dates',
+    routeStyle: 'Single city',
+    routeSummary: 'Choose a sacred river or kshetra for ancestor remembrance and tarpan rituals.',
+    significance: 'Offer gratitude and peace to ancestors through sacred water rituals guided by tradition.',
+    planningNotes: ['Ritual date and location matter.', 'Usually shorter than major circuit yatras.', 'Priest coordination and timing are important.', 'Good for families seeking peace and remembrance.'],
+    meeraCanHelpWith: ['Choosing the right location', 'Ritual timing', 'Priest coordination guidance', 'Family travel support'],
+    tags: ['Pitru Shanti', 'Sacred waters', '1–3 days', 'Family'],
     image: '/images/yatras/pitru-tarpan.jpg',
     imagePrompt: 'A peaceful sacred river ghat at sunrise with diya lamps floating on water, priests performing rituals in the distance, calm golden atmosphere, no text',
-    href: '/plan',
+    href: '/explore/pitru-tarpan',
   },
   {
     id: 'family-yatra',
     title: 'Family Yatra',
-    subtitle: 'Balanced darshan journeys for all age groups',
-    tradition: 'Grihastha Dharma',
-    count: 'Flexible circuit',
-    primaryDeity: 'Varies by family sankalp',
-    regions: 'Pan-Bharat',
-    recommendedFor: 'Families with elders and children',
-    duration: '3–8 days',
-    bestSeason: 'School breaks & mild weather',
-    significance: 'Comfort-first devotional routes with paced travel, darshan slots, and family support.',
-    tags: ['Family', 'Comfort', 'Guided'],
+    tradition: 'Grihastha Blessings',
+    count: 'Custom family journey',
+    primaryDeity: 'Based on family sankalp',
+    regions: ['Near your city', 'Regional circuits', 'Across Bharat'],
+    recommendedFor: ['Parents', 'Children', 'Senior citizens', 'First-time pilgrims', 'Family blessings'],
+    duration: '2–5 days',
+    difficulty: 'Easy',
+    bestSeason: 'Flexible',
+    routeStyle: 'Regional circuit',
+    routeSummary: 'A gentle temple journey planned around comfort, darshan, food, rest, and family needs.',
+    significance: 'A peaceful yatra designed for family comfort, blessings, and low-stress darshan.',
+    planningNotes: ['Best for families who want simple planning.', 'Prioritize shorter routes and fewer hotel changes.', 'Useful when travelling with elders or children.', 'Can be customized by city, time, and comfort level.'],
+    meeraCanHelpWith: ['Choosing nearby temples', 'Senior-friendly planning', 'Food and stay preferences', 'Low-stress darshan schedule'],
+    tags: ['Family', 'Senior-friendly', '2–5 days', 'Comfort'],
     image: '/images/yatras/family-yatra.jpg',
     imagePrompt: 'An Indian family walking together toward a temple entrance at sunrise, warm devotional mood, premium spiritual travel photography, no text',
-    href: '/plan',
+    href: '/explore/family-yatra',
   },
 ];
