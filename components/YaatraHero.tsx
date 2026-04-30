@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { openMeeraWhatsApp } from '@/lib/whatsapp';
 
 interface YaatraHeroProps {
   userName: string;
@@ -110,7 +111,7 @@ export default function YaatraHero({ userName, onExplore }: YaatraHeroProps) {
           </div>
           <button
             type="button"
-            onClick={() => window.open('https://wa.me/919999999999?text=Namaste%20Meera,%20I%20want%20to%20begin%20my%20Yatra.', '_blank', 'noopener,noreferrer')}
+            onClick={() => openMeeraWhatsApp('Namaste Meera, I want to begin my Yatra.')}
             className="mt-2 text-sm font-medium text-[#C4671A]"
           >
             Talk to her →

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import BackButton from '@/components/BackButton';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { getSupabaseClient } from '@/lib/supabaseClient';
+import { openMeeraWhatsApp } from '@/lib/whatsapp';
 
 type TravelStyle = 'Budget' | 'Comfort' | 'Premium';
 
@@ -22,7 +23,6 @@ type YatraPlanDraft = {
   updatedAt: string;
 };
 
-const MEERA_WHATSAPP_NUMBER = 'REPLACE_WITH_NUMBER';
 const DRAFT_KEY = 'yaatri_plan_draft';
 const LEGACY_YATRA_KEY = 'yaatra_yatra';
 
@@ -102,8 +102,6 @@ export default function PlanPage() {
 
   const selectedYatraTitle = useMemo(() => draft.selectedCircuitTitle?.trim(), [draft.selectedCircuitTitle]);
 
-  const configuredNumber = process.env.NEXT_PUBLIC_MEERA_WHATSAPP_NUMBER?.replace(/\D/g, '') || process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') || MEERA_WHATSAPP_NUMBER;
-
   const handleContinue = async () => {
     const latestDraft = { ...draft, updatedAt: new Date().toISOString() };
     setDraft(latestDraft);
@@ -147,8 +145,7 @@ export default function PlanPage() {
       }
     }
 
-    const whatsappHref = `https://wa.me/${configuredNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappHref, '_blank', 'noopener,noreferrer');
+    openMeeraWhatsApp(message);
   };
 
   return (

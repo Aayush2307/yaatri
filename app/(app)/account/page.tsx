@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import BackButton from '@/components/BackButton';
 import { getSupabaseClient } from '@/lib/supabaseClient';
+import { openMeeraWhatsApp } from '@/lib/whatsapp';
 
 type TravelStyle = 'Budget' | 'Comfortable' | 'Premium';
 type StayPref = 'Dharamshala' | 'Standard hotel' | 'Premium hotel' | 'Ashram stay';
@@ -117,9 +118,8 @@ export default function AccountPage() {
   };
 
   const shareWithMeera = () => {
-    const number = process.env.NEXT_PUBLIC_MEERA_WHATSAPP_NUMBER?.replace(/\D/g, '') || process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') || 'REPLACE_WITH_NUMBER';
     const summary = `Namaste Meera, sharing my Yatra Profile:\nName: ${profile.name || '-'}\nPhone: ${profile.phone || '-'}\nHome city: ${profile.homeCity || '-'}\nLanguage: ${profile.preferredLanguage || '-'}\nTravellers: ${profile.travellersCount || '-'}\nTravelling with: ${profile.travellingWith.join(', ') || '-'}\nMobility needs: ${profile.mobilityNeeds}\nTravel style: ${profile.travelStyle}\nStay preference: ${profile.stayPreference}\nFood preference: ${profile.foodPreference}\nInterested yatras: ${profile.interestedYatras.join(', ') || '-'}\nPreferred season/month: ${profile.preferredSeason || '-'}\nTrip duration: ${profile.tripDuration}\nSpecial notes: ${profile.specialNotes || '-'}`;
-    window.open(`https://wa.me/${number}?text=${encodeURIComponent(summary)}`, '_blank', 'noopener,noreferrer');
+    openMeeraWhatsApp(summary);
   };
 
   return (
