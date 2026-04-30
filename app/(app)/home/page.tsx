@@ -61,7 +61,7 @@ export default function HomePage() {
 
         <section className="space-y-6">
           <div className="rounded-2xl bg-[#F5F0E8] p-5 shadow-sm">
-            <h1 className="font-serif text-4xl leading-tight text-[#4A3322]">Your family's yatra starts right here.</h1>
+            <h1 className="font-serif text-4xl leading-tight text-[#4A3322]">Your family&apos;s yatra starts right here.</h1>
             <p className="pt-3 text-sm leading-relaxed text-[#6E5642]">
               Begin with intention, move with clarity, and reach darshan with peace at every step.
             </p>
