@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
+import BackButton from '@/components/BackButton';
 
 type TravelStyle = 'Budget' | 'Comfortable' | 'Premium';
 type StayPref = 'Dharamshala' | 'Standard hotel' | 'Premium hotel' | 'Ashram stay';
@@ -97,6 +98,8 @@ export default function AccountPage() {
   return (
     <main className="min-h-screen bg-[#F5F0E8] pb-24 text-[#2B2119]">
       <div className="mx-auto max-w-md space-y-4 px-4 pt-6">
+        <BackButton />
+
         <section>
           <p className="text-sm tracking-[0.12em] text-[#8A7665]">Account</p>
           <h1 className="pt-2 font-serif text-4xl leading-tight">Your Yatra Profile</h1>
