@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { SANKALPS } from '@/data/sankalps';
 import { useYatra } from '@/hooks/useYatra';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { YaatriLogo } from '@/components/YaatriLogo';
 import { sampleTrip } from '@/lib/mockData';
 
 export default function HomePage() {
@@ -47,7 +48,7 @@ export default function HomePage() {
       <div className="mx-auto max-w-md px-4 pb-24 pt-6">
         <header className="mb-6 flex items-start justify-between">
           <div>
-            <p className="text-sm tracking-[0.14em] text-[#8B6A4B]">YAATRA</p>
+            <YaatriLogo size="sm" />
             <p className="pt-1 text-sm text-[#6E5642]">Namaste, {name}</p>
           </div>
           <Link
