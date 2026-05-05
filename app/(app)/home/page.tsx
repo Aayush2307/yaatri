@@ -44,9 +44,9 @@ export default function HomePage() {
   } as const;
 
   return (
-    <main className="min-h-screen bg-[#FAF5EB] text-[#3F2D1F]">
-      <div className="mx-auto max-w-md px-4 pb-24 pt-6">
-        <header className="mb-6 flex items-start justify-between">
+    <main className="min-h-screen bg-[#FAF5EB] text-[#3F2D1F] flex flex-col">
+      <div className="mx-auto w-full px-4 md:px-8 lg:px-12 pb-6 md:pb-10 pt-6 md:pt-10 flex-1">
+        <header className="mb-8 md:mb-10 flex items-start justify-between">
           <div>
             <YaatriLogo size="sm" />
             <p className="pt-1 text-sm text-[#6E5642]">Namaste, {name}</p>
@@ -97,7 +97,7 @@ export default function HomePage() {
 
           <div className="rounded-2xl bg-[#F5F0E8] p-5 shadow-sm">
             <p className="text-xs uppercase tracking-[0.12em] text-[#8A7665]">Choose your Sankalp</p>
-            <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {SANKALPS.map((sankalp) => {
                 const isSelected = yatra.sankalpId === sankalp.id;
                 const circuit = circuitLabelMap[sankalp.suggestedCircuit];
@@ -148,7 +148,7 @@ export default function HomePage() {
         </section>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0"><BottomNav active="home" /></div>
+      <div className="fixed bottom-0 left-0 right-0 z-30"><BottomNav active="home" /></div>
     </main>
   );
 }

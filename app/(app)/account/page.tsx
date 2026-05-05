@@ -123,11 +123,11 @@ export default function AccountPage() {
   };
 
   return (
-    <main className="min-h-[100dvh] overflow-x-hidden bg-[#F5F0E8] pb-28 text-[#2B2119]">
-      <div className="mx-auto max-w-md space-y-4 px-4 pt-6">
+    <main className="min-h-[100dvh] overflow-x-hidden bg-[#FAF5EB] pb-28 text-[#2B2119]">
+      <div className="mx-auto w-full md:max-w-2xl lg:max-w-4xl space-y-4 md:space-y-6 px-4 md:px-8 pt-8">
         <BackButton />
 
-        <section>
+        <section className="mb-6">
           <p className="text-sm tracking-[0.12em] text-[#8A7665]">Account</p>
           <h1 className="pt-2 font-serif text-4xl leading-tight">Your Yatra Profile</h1>
           <p className="pt-3 text-sm leading-relaxed text-[#8A7665]">

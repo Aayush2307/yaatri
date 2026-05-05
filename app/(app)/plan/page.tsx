@@ -149,8 +149,8 @@ export default function PlanPage() {
   };
 
   return (
-    <main className="min-h-[100dvh] overflow-x-hidden bg-[#F5F0E8] pb-44 text-[#2B2119]">
-      <div className="mx-auto max-w-md px-4 pt-6">
+    <main className="min-h-[100dvh] overflow-x-hidden bg-[#FAF5EB] pb-44 text-[#2B2119]">
+      <div className="mx-auto w-full md:max-w-2xl px-4 md:px-8 mt-2 pt-6">
         <BackButton />
 
         <section>
@@ -313,12 +313,12 @@ export default function PlanPage() {
         </section>
       </div>
 
-      <div className="fixed bottom-20 left-0 right-0 px-4">
-        <div className="mx-auto max-w-md rounded-2xl border border-[rgba(43,33,25,0.15)] bg-[#FFFCF7] p-3 shadow-md">
+      <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 px-4 md:px-8 pointer-events-none z-20 flex justify-center">
+        <div className="w-full max-w-md pointer-events-auto rounded-2xl border border-[rgba(43,33,25,0.15)] bg-[#FFFCF7] p-3 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
           <button
             type="button"
             onClick={handleContinue}
-            className="inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-[#C66A2B] px-4 text-sm font-medium text-[#FFF8EE]"
+            className="inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-[#C66A2B] px-4 text-sm font-medium text-[#FFF8EE] shadow-sm tracking-wide"
           >
             Continue with Meera
           </button>

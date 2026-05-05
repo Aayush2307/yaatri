@@ -119,3 +119,67 @@ model Notification {
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  userId    String?
+  startedAt DateTime      @default(now())
+  endedAt   DateTime?
+  createdAt DateTime      @default(now())
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  role      String
+  content   String
+  createdAt DateTime    @default(now())
+  session   ChatSession @relation(fields: [sessionId], references: [id])
+}
+
+model Temple {
+  id          String    @id @default(cuid())
+  name        String
+  location    String
+  state       String
+  latitude    Float?
+  longitude   Float?
+  openingTime String?
+  closingTime String?
+  description String?
+  createdAt   DateTime  @default(now())
+  muhurats    Muhurat[]
+
+  @@unique([name, location, state])
+}
+
+model Muhurat {
+  id        String   @id @default(cuid())
+  templeId  String?
+  date      DateTime
+  startTime String
+  endTime   String
+  notes     String?
+  createdAt DateTime @default(now())
+  temple    Temple?  @relation(fields: [templeId], references: [id])
+}
+
+model Booking {
+  id            String   @id @default(cuid())
+  userId        String
+  tripId        String?
+  referenceCode String   @unique
+  status        String   @default("pending")
+  amount        Int?
+  currency      String?  @default("INR")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ApiCache {
+  key       String   @id
+  response  Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

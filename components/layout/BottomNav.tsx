@@ -30,8 +30,8 @@ export function BottomNav({ active }: BottomNavProps) {
   );
 
   return (
-    <nav className="mx-auto w-full max-w-[430px] border-t-[0.5px] border-divider bg-white px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2.5">
-      <ul className="grid grid-cols-5 gap-1">
+    <nav className="mx-auto w-full md:max-w-5xl lg:max-w-6xl xl:max-w-7xl max-w-md border-t-[0.5px] border-divider bg-white px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
+      <ul className="grid grid-cols-5 gap-1 md:gap-4 md:px-8">
         {tabs.map((tab) => {
           const isActive = tab.key === active;
           return (
