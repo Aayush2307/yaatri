@@ -7,6 +7,62 @@ import Link from 'next/link';
 export default function SignInPage() {
   const router = useRouter();
   const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const sendOtp = async () => {
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: `+91${phone}` }),
+      });
+
+      const data = (await response.json()) as { ok?: boolean; error?: string };
+      if (!response.ok || !data.ok) {
+        setError(data.error || 'Unable to send OTP.');
+        return;
+      }
+
+      setStep('otp');
+    } catch {
+      setError('Unable to send OTP. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: `+91${phone}`, otp }),
+      });
+
+      const data = (await response.json()) as { ok?: boolean; token?: string; user?: { name?: string; phone?: string } };
+      if (!response.ok || !data.ok || !data.token) {
+        setError('Invalid OTP. Please try again.');
+        return;
+      }
+
+      localStorage.setItem('yaatri_token', data.token);
+      localStorage.setItem('yaatri_user', JSON.stringify({ name: data.user?.name || 'Yaatri User', phone: data.user?.phone || `+91${phone}` }));
+      router.push('/home');
+    } catch {
+      setError('Unable to verify OTP. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-indigo-deepest px-5 pb-10 pt-8 text-star-white">
@@ -27,18 +83,48 @@ export default function SignInPage() {
           />
         </div>
 
-        <button
-          type="button"
-          disabled={phone.length < 10}
-          onClick={() => {
-            localStorage.setItem('yaatri_token', 'mock-token');
-            localStorage.setItem('yaatri_user', JSON.stringify({ name: 'Yaatri User', phone: `+91${phone}` }));
-            router.push('/home');
-          }}
-          className="min-h-[44px] rounded-[11px] bg-indigo-mid text-[13px] disabled:opacity-40"
-        >
-          Verify & sign in
-        </button>
+        {step === 'otp' ? (
+          <input
+            value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="Enter OTP"
+            className="min-h-[44px] rounded-[10px] border-[0.5px] border-divider bg-transparent px-3 text-[13px]"
+          />
+        ) : null}
+
+        {error ? <p className="text-[12px] text-[#F0B3B3]">{error}</p> : null}
+
+        {step === 'phone' ? (
+          <button
+            type="button"
+            disabled={phone.length < 10 || isLoading}
+            onClick={sendOtp}
+            className="min-h-[44px] rounded-[11px] bg-indigo-mid text-[13px] disabled:opacity-40"
+          >
+            {isLoading ? 'Sending...' : 'Send OTP'}
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setStep('phone');
+                setOtp('');
+              }}
+              className="min-h-[44px] flex-1 rounded-[11px] border border-divider text-[13px]"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              disabled={otp.length < 6 || isLoading}
+              onClick={verifyOtp}
+              className="min-h-[44px] flex-1 rounded-[11px] bg-indigo-mid text-[13px] disabled:opacity-40"
+            >
+              {isLoading ? 'Verifying...' : 'Verify & sign in'}
+            </button>
+          </div>
+        )}
 
         <p className="text-center text-[12px] text-text-muted">
           New to Yaatri?{' '}

@@ -20,10 +20,10 @@ export default function ConciergePage() {
   const primaryWhatsAppHref = buildWhatsAppLink(defaultPrompt);
 
   return (
-    <main className="min-h-screen bg-[#F5F0E8] pb-24 text-[#2B2119]">
-      <div className="mx-auto max-w-md px-4 pt-6">
+    <main className="min-h-screen bg-[#FAF5EB] pb-24 text-[#2B2119] flex flex-col">
+      <div className="mx-auto w-full px-4 md:px-8 lg:px-12 md:max-w-2xl pt-6">
         <BackButton />
-        <section>
+        <section className="mt-4 md:mt-2">
           <p className="text-sm tracking-[0.12em] text-[#8A7665]">Meera Concierge</p>
           <h1 className="pt-2 font-serif text-4xl leading-tight">Your yatra, held by someone who understands.</h1>
           <p className="pt-3 text-sm leading-relaxed text-[#8A7665]">

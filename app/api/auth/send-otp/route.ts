@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
-export async function GET() {
-  return NextResponse.json({ ok: true });
-}
+export async function POST(request: NextRequest) {
+  const payload = (await request.json()) as { phone?: string };
+  if (!payload.phone) {
+    return NextResponse.json({ ok: false, error: 'Phone is required.' }, { status: 400 });
+  }
 
-export async function POST() {
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, message: 'OTP sent (mock).' });
 }

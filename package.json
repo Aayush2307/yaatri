@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@prisma/client": "^5",
+    "@prisma/client": "^5.22.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
     "@tanstack/react-query": "^5",
@@ -24,7 +24,6 @@
     "next": "^14.2.35",
     "next-pwa": "^5",
     "postcss": "^8",
-    "prisma": "^5",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7",
@@ -38,6 +37,10 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8.57.0",
-    "eslint-config-next": "14.2.0"
+    "eslint-config-next": "14.2.0",
+    "prisma": "^5.22.0"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }
