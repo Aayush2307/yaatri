@@ -17,7 +17,7 @@ const SYSTEM_PROMPT =
   'You are a premium spiritual travel concierge for the Yaatri platform. Your responses must be human-readable, conversational, and meticulously formatted. Use clean spacing, headings, and bullet points. Never expose backend JSON, object logs, or technical data inside the message. Convert all API results into a fluid, user-friendly summary. Keep emojis minimal and professional.';
 
 const PLANNER_PROMPT =
-  'Return a JSON object that matches this schema: {"message": string, "intent": string, "actions": [{"type":"redirect","label": string, "url": string}], "toolCalls": [{"name": "search_temples|get_muhurat|search_routes|booking_options", "params": object}]}. Do not include markdown code block syntax around the JSON.';
+  'You are an AI planner. Decide which tools to call based on the user\'s message and recent conversation context. Return a JSON object matching this exact schema: {"message": string, "intent": string, "actions": [{"type":"redirect","label": string, "url": string}], "toolCalls": [{"name": "search_temples|get_muhurat|search_routes|booking_options", "params": {"query": "search text", "date": "optional date", "location": "optional location"}}]}. Do not include markdown code blocks. For `search_temples`, always supply a `query` parameter (e.g., {"query": "Delhi"} or {"query": "Akshardham"}). If no tool is needed, leave `toolCalls` empty.';
 
 type ChatAction = {
   type: 'redirect';
@@ -70,7 +70,7 @@ function isDisallowedContent(message: string) {
   return false;
 }
 
-async function callGroq(messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>) {
+async function callGroq(messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>, forceJson = false) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return { ok: false, error: 'Chatbot is not configured. Missing GROQ_API_KEY.' } as const;
@@ -87,6 +87,7 @@ async function callGroq(messages: Array<{ role: 'system' | 'user' | 'assistant';
       stream: false,
       temperature: 0.4,
       messages,
+      ...(forceJson ? { response_format: { type: 'json_object' } } : {}),
     }),
   });
 
@@ -108,6 +109,10 @@ async function callGroq(messages: Array<{ role: 'system' | 'user' | 'assistant';
 
 function tryParsePlan(raw: string): ChatPlan | null {
   try {
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (match) {
+      return JSON.parse(match[0]) as ChatPlan;
+    }
     const cleaned = raw.replace(/^```json/m, '').replace(/^```/m, '').replace(/```$/m, '').trim();
     return JSON.parse(cleaned) as ChatPlan;
   } catch {
@@ -160,14 +165,18 @@ async function runTool(
   return { ok: true, data: data.data };
 }
 
-async function resolveSession(sessionId?: string | null) {
-  if (sessionId) {
-    const existing = await db.chatSession.findUnique({ where: { id: sessionId } });
-    if (existing) return existing.id;
+async function resolveSession(sessionId?: string | null): Promise<string | null> {
+  try {
+    if (sessionId) {
+      const existing = await db.chatSession.findUnique({ where: { id: sessionId } });
+      if (existing) return existing.id;
+    }
+    const created = await db.chatSession.create({ data: {} });
+    return created.id;
+  } catch {
+    // DB not yet migrated or Prisma client not generated — session persistence skipped.
+    return sessionId ?? null;
   }
-
-  const created = await db.chatSession.create({ data: {} });
-  return created.id;
 }
 
 export async function POST(request: NextRequest) {
@@ -197,19 +206,42 @@ export async function POST(request: NextRequest) {
   }
 
   const sessionId = await resolveSession(payload?.sessionId);
-  await db.chatMessage.create({
-    data: {
-      sessionId,
-      role: 'user',
-      content: message,
-    },
-  });
+
+  // Fetch conversation history for context (gracefully skipped if DB unavailable)
+  let history: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+  try {
+    if (sessionId) {
+      const pastMessages = await db.chatMessage.findMany({
+        where: { sessionId },
+        orderBy: { createdAt: 'asc' },
+        take: 10,
+      });
+      history = pastMessages.map((msg) => ({
+        role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+        content: msg.content,
+      }));
+    }
+  } catch {
+    // DB unavailable — continuing without conversation history.
+  }
+
+  // Persist user message (gracefully skipped if DB unavailable)
+  try {
+    if (sessionId) {
+      await db.chatMessage.create({
+        data: { sessionId, role: 'user', content: message },
+      });
+    }
+  } catch {
+    // DB persistence unavailable — continuing without saving message.
+  }
 
   const planResult = await callGroq([
     { role: 'system', content: SYSTEM_PROMPT },
     { role: 'system', content: PLANNER_PROMPT },
+    ...history,
     { role: 'user', content: message },
-  ]);
+  ], true);
 
   if (!planResult.ok) {
     return NextResponse.json({ message: planResult.error, actions: [], intent: 'error', sessionId }, { status: 502 });
@@ -234,10 +266,11 @@ export async function POST(request: NextRequest) {
 
   const finalResult = await callGroq([
     { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'system', content: 'Use the tool results to craft a final JSON response. Structure it exactly like PLANNER_PROMPT. The `message` field MUST be beautifully formatted Markdown (headings, lists) to be shown directly to the user. Never include JSON syntax in the `message` string.' },
-    { role: 'assistant', content: `Tool results: ${toolSummary}` },
+    { role: 'system', content: 'Use the tool results to craft a final JSON response. Structure it exactly like PLANNER_PROMPT. The `message` field MUST be beautifully formatted Markdown (headings, lists) to be shown directly to the user. Never include JSON syntax in the `message` string. Return a valid JSON object.' },
+    ...history,
+    { role: 'system', content: `Tool results: ${toolSummary}` },
     { role: 'user', content: message },
-  ]);
+  ], true);
 
   if (!finalResult.ok) {
     return NextResponse.json({ message: finalResult.error, actions: [], intent: 'error', sessionId }, { status: 502 });
@@ -249,13 +282,16 @@ export async function POST(request: NextRequest) {
     actions: plan.actions || [],
   };
 
-  await db.chatMessage.create({
-    data: {
-      sessionId,
-      role: 'assistant',
-      content: finalPlan.message,
-    },
-  });
+  // Persist assistant message (gracefully skipped if DB unavailable)
+  try {
+    if (sessionId) {
+      await db.chatMessage.create({
+        data: { sessionId, role: 'assistant', content: finalPlan.message },
+      });
+    }
+  } catch {
+    // DB persistence unavailable — continuing without saving message.
+  }
 
   return NextResponse.json({
     message: finalPlan.message,

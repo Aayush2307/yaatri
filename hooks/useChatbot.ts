@@ -82,6 +82,9 @@ export function useChatbot() {
         setMessages((prev) => [...prev, assistantMessage]);
         if (response.sessionId && response.sessionId !== sessionId) {
           setSessionId(response.sessionId);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('yaatri_chat_session', response.sessionId);
+          }
         }
       } catch {
         setMessages((prev) => [
