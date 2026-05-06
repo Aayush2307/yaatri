@@ -41,3 +41,7 @@ skills-lock.json
 # other project files
 app/generated/
 
+.vercel
+.claude/
+tsconfig.tsbuildinfo
+lib/auth.ts.local-backup
