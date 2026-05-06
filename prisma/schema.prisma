@@ -26,6 +26,7 @@ model User {
   trips                Trip[]
   notifications        Notification[]
   messages             ConciergeMessage[]
+  chatSessions         ChatSession[]
 }
 
 model Concierge {
@@ -127,6 +128,9 @@ model ChatSession {
   endedAt   DateTime?
   createdAt DateTime      @default(now())
   messages  ChatMessage[]
+  user      User?         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model ChatMessage {
@@ -136,6 +140,9 @@ model ChatMessage {
   content   String
   createdAt DateTime    @default(now())
   session   ChatSession @relation(fields: [sessionId], references: [id])
+
+  @@index([sessionId])
+  @@index([createdAt])
 }
 
 model Temple {
@@ -152,6 +159,7 @@ model Temple {
   muhurats    Muhurat[]
 
   @@unique([name, location, state])
+  @@index([name, location, state])
 }
 
 model Muhurat {

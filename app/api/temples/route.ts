@@ -5,21 +5,25 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('query')?.trim();
 
-  const temples = await db.temple.findMany({
-    where: query
-      ? {
-          OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { location: { contains: query, mode: 'insensitive' } },
-            { state: { contains: query, mode: 'insensitive' } },
-          ],
-        }
-      : undefined,
-    take: 10,
-    orderBy: { name: 'asc' },
-  });
-
-  return NextResponse.json({ ok: true, data: temples });
+  try {
+    const temples = await db.temple.findMany({
+      where: query
+        ? {
+            OR: [
+              { name: { contains: query, mode: 'insensitive' } },
+              { location: { contains: query, mode: 'insensitive' } },
+              { state: { contains: query, mode: 'insensitive' } },
+            ],
+          }
+        : undefined,
+      take: 10,
+      orderBy: { name: 'asc' },
+    });
+    return NextResponse.json({ ok: true, data: temples });
+  } catch (error) {
+    console.error('[temples] DB error:', error);
+    return NextResponse.json({ ok: false, error: 'Service temporarily unavailable.' }, { status: 503 });
+  }
 }
 
 export async function POST(request: NextRequest) {
