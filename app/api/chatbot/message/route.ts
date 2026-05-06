@@ -165,14 +165,18 @@ async function runTool(
   return { ok: true, data: data.data };
 }
 
-async function resolveSession(sessionId?: string | null) {
-  if (sessionId) {
-    const existing = await db.chatSession.findUnique({ where: { id: sessionId } });
-    if (existing) return existing.id;
+async function resolveSession(sessionId?: string | null): Promise<string | null> {
+  try {
+    if (sessionId) {
+      const existing = await db.chatSession.findUnique({ where: { id: sessionId } });
+      if (existing) return existing.id;
+    }
+    const created = await db.chatSession.create({ data: {} });
+    return created.id;
+  } catch {
+    // DB not yet migrated or Prisma client not generated — session persistence skipped.
+    return sessionId ?? null;
   }
-
-  const created = await db.chatSession.create({ data: {} });
-  return created.id;
 }
 
 export async function POST(request: NextRequest) {
@@ -202,25 +206,35 @@ export async function POST(request: NextRequest) {
   }
 
   const sessionId = await resolveSession(payload?.sessionId);
-  
-  const pastMessages = await db.chatMessage.findMany({
-    where: { sessionId },
-    orderBy: { createdAt: 'asc' },
-    take: 10,
-  });
 
-  const history = pastMessages.map((msg) => ({
-    role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
-    content: msg.content,
-  }));
+  // Fetch conversation history for context (gracefully skipped if DB unavailable)
+  let history: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+  try {
+    if (sessionId) {
+      const pastMessages = await db.chatMessage.findMany({
+        where: { sessionId },
+        orderBy: { createdAt: 'asc' },
+        take: 10,
+      });
+      history = pastMessages.map((msg) => ({
+        role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+        content: msg.content,
+      }));
+    }
+  } catch {
+    // DB unavailable — continuing without conversation history.
+  }
 
-  await db.chatMessage.create({
-    data: {
-      sessionId,
-      role: 'user',
-      content: message,
-    },
-  });
+  // Persist user message (gracefully skipped if DB unavailable)
+  try {
+    if (sessionId) {
+      await db.chatMessage.create({
+        data: { sessionId, role: 'user', content: message },
+      });
+    }
+  } catch {
+    // DB persistence unavailable — continuing without saving message.
+  }
 
   const planResult = await callGroq([
     { role: 'system', content: SYSTEM_PROMPT },
@@ -268,13 +282,16 @@ export async function POST(request: NextRequest) {
     actions: plan.actions || [],
   };
 
-  await db.chatMessage.create({
-    data: {
-      sessionId,
-      role: 'assistant',
-      content: finalPlan.message,
-    },
-  });
+  // Persist assistant message (gracefully skipped if DB unavailable)
+  try {
+    if (sessionId) {
+      await db.chatMessage.create({
+        data: { sessionId, role: 'assistant', content: finalPlan.message },
+      });
+    }
+  } catch {
+    // DB persistence unavailable — continuing without saving message.
+  }
 
   return NextResponse.json({
     message: finalPlan.message,
