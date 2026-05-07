@@ -43,7 +43,8 @@ npm run build
 echo "=== [4/6] Deploy to Vercel production ==="
 DEPLOY_OUTPUT=$(vercel --prod --yes 2>&1)
 echo "$DEPLOY_OUTPUT"
-DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -E '^https://' | tail -1 || true)
+# Prefer the aliased production URL (public) over the deployment-specific URL (Vercel-protected)
+DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -Eo 'Aliased: https://[a-zA-Z0-9._/-]+' | grep -Eo 'https://[^ ]+' | head -1 || true)
 if [ -z "$DEPLOY_URL" ]; then
   DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -Eo 'https://[a-zA-Z0-9._-]+\.vercel\.app' | tail -1 || true)
 fi
