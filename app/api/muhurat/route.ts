@@ -63,6 +63,10 @@ export async function GET(request: NextRequest) {
   const dateValue = date || new Date().toISOString().slice(0, 10);
   const datetime = buildProkeralaDateTime(dateValue, timezone);
 
+  if (!process.env.PROKERALA_CLIENT_ID || !process.env.PROKERALA_CLIENT_SECRET) {
+    return NextResponse.json({ ok: true, source: 'none', data: [] });
+  }
+
   try {
     const data = await fetchProkeralaWithFallback(
       [MUHURAT_ENDPOINT, ...MUHURAT_FALLBACKS.filter((item) => item !== MUHURAT_ENDPOINT)],
