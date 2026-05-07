@@ -20,6 +20,10 @@ model User {
   mobilityNeeds        String[]             @default(["none"])
   dietaryPrefs         String[]             @default(["no_preference"])
   deviceToken          String?
+
+  role                 Role                 @default(USER)
+  isActive             Boolean              @default(true)
+
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
   conciergeAssignment  ConciergeAssignment?
@@ -27,6 +31,13 @@ model User {
   notifications        Notification[]
   messages             ConciergeMessage[]
 }
+
+enum Role {
+  USER
+  ADMIN
+}
+
+
 
 model Concierge {
   id                String               @id @default(cuid())
@@ -119,3 +130,14 @@ model Notification {
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }
+
+model AdminLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
