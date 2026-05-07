@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 const WHATSAPP_NUMBER = '918153026157'
 
@@ -56,10 +57,17 @@ function MandalaSVG() {
 }
 
 export default function HeroSection() {
+  const router = useRouter()
   const [inputValue, setInputValue] = useState('')
 
+  const goToConcierge = (text: string) => {
+    const q = text.trim()
+    if (!q) return
+    router.push(`/concierge?q=${encodeURIComponent(q)}`)
+  }
+
   const handleSend = () => {
-    if (inputValue.trim()) openWhatsApp(inputValue.trim())
+    goToConcierge(inputValue)
   }
 
   return (
@@ -191,7 +199,7 @@ export default function HeroSection() {
               <button
                 key={chip.id}
                 className="hero-chip"
-                onClick={() => openWhatsApp(chip.message)}
+                onClick={() => goToConcierge(chip.message)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '8px 15px',

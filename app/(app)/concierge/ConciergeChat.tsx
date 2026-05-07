@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useMeeraChat } from '@/hooks/useMeeraChat';
 
+interface ConciergeChatProps {
+  prefillQuery?: string;
+}
+
 // ── constants ─────────────────────────────────────────────────────────────────
 
 const WHATSAPP_NUMBER =
@@ -21,7 +25,7 @@ const PROMPT_CHIPS = [
 
 // ── component ─────────────────────────────────────────────────────────────────
 
-export function ConciergeChat() {
+export function ConciergeChat({ prefillQuery }: ConciergeChatProps = {}) {
   const { messages, isStreaming, error, send, clearError } = useMeeraChat();
   const [draft, setDraft] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -29,6 +33,12 @@ export function ConciergeChat() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    const q = prefillQuery?.trim();
+    if (q) void send(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSend = (e?: FormEvent) => {
     e?.preventDefault();
