@@ -43,9 +43,9 @@ npm run build
 echo "=== [4/6] Deploy to Vercel production ==="
 DEPLOY_OUTPUT=$(vercel --prod --yes 2>&1)
 echo "$DEPLOY_OUTPUT"
-DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -E '^https://' | tail -1)
+DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -E '^https://' | tail -1 || true)
 if [ -z "$DEPLOY_URL" ]; then
-  DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -Eo 'https://[a-zA-Z0-9._-]+\.vercel\.app' | tail -1)
+  DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -Eo 'https://[a-zA-Z0-9._-]+\.vercel\.app' | tail -1 || true)
 fi
 echo ""
 echo "Deployed URL: ${DEPLOY_URL:-unknown}"
@@ -66,7 +66,7 @@ if [ -n "${DEPLOY_URL:-}" ]; then
   echo -n "  GET / (home page) ... "
   STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEPLOY_URL/" || echo "000")
   echo "$STATUS"
-  [ "$STATUS" = "200" ] || [ "$STATUS" = "307" ] && echo "  Home page OK"
+  { [ "$STATUS" = "200" ] || [ "$STATUS" = "307" ]; } && echo "  Home page OK" || true
 else
   echo "No deploy URL captured — skipping smoke tests"
 fi
