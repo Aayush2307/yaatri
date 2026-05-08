@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { ChatHeader } from '@/components/chatbot/ChatHeader';
 import { ChatInput } from '@/components/chatbot/ChatInput';
 import { ChatMessage } from '@/components/chatbot/ChatMessage';
@@ -9,7 +9,10 @@ import { useChatbot, type ChatAction } from '@/hooks/useChatbot';
 
 export function ChatWidget() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+
+  if (pathname?.startsWith('/concierge')) return null;
   const { messages, isSending, sendMessage } = useChatbot();
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -68,7 +71,7 @@ export function ChatWidget() {
           aria-expanded={isOpen}
           aria-label="Open chat assistant"
         >
-          AI
+          <span className="font-serif" style={{ fontSize: '1.4rem', lineHeight: 1 }} aria-label="Meera">म</span>
         </button>
       </div>
     </div>

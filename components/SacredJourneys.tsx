@@ -15,9 +15,95 @@ interface Journey {
   title: string
   price: string
   whatsappMessage: string
-  placeholderGradient: string
+  illustrationId: string
   imageSrc?: string
   imageAlt: string
+}
+
+/* ─── Illustrations ─── */
+
+function JourneyIllustration({ id }: { id: string }) {
+  switch (id) {
+    case 'kashi':
+      return (
+        <svg viewBox="0 0 160 110" width="100%" height="100%">
+          <path d="M10,88 Q40,83 80,88 Q120,93 150,86" fill="none" stroke="#C85A1E" strokeWidth="1.5" />
+          <path d="M10,98 Q40,94 80,99 Q120,104 150,98" fill="none" stroke="#C85A1E" strokeWidth="0.8" />
+          <rect x="20" y="72" width="120" height="4" fill="none" stroke="#C85A1E" strokeWidth="0.7" />
+          <rect x="14" y="76" width="132" height="5" fill="none" stroke="#C85A1E" strokeWidth="0.8" />
+          <rect x="8" y="81" width="144" height="7" fill="none" stroke="#C85A1E" strokeWidth="1" />
+          <rect x="62" y="46" width="36" height="26" fill="none" stroke="#C85A1E" strokeWidth="1.5" />
+          <polygon points="62,46 80,20 98,46" fill="none" stroke="#C85A1E" strokeWidth="1.5" />
+          <line x1="80" y1="20" x2="80" y2="10" stroke="#C85A1E" strokeWidth="1.2" />
+          <circle cx="80" cy="8" r="2.5" fill="none" stroke="#C85A1E" strokeWidth="1" />
+          <circle cx="80" cy="7" r="1.2" fill="#C85A1E" />
+          <line x1="64" y1="60" x2="96" y2="60" stroke="#C85A1E" strokeWidth="0.5" />
+          <line x1="64" y1="66" x2="96" y2="66" stroke="#C85A1E" strokeWidth="0.5" />
+          <rect x="27" y="56" width="22" height="16" fill="none" stroke="#C85A1E" strokeWidth="1" />
+          <polygon points="27,56 38,40 49,56" fill="none" stroke="#C85A1E" strokeWidth="1.2" />
+          <line x1="38" y1="40" x2="38" y2="33" stroke="#C85A1E" strokeWidth="1" />
+          <circle cx="38" cy="32" r="1.5" fill="#C85A1E" />
+          <rect x="111" y="56" width="22" height="16" fill="none" stroke="#C85A1E" strokeWidth="1" />
+          <polygon points="111,56 122,41 133,56" fill="none" stroke="#C85A1E" strokeWidth="1.2" />
+          <line x1="122" y1="41" x2="122" y2="34" stroke="#C85A1E" strokeWidth="1" />
+          <circle cx="122" cy="33" r="1.5" fill="#C85A1E" />
+          <circle cx="34" cy="80" r="2.5" fill="none" stroke="#C85A1E" strokeWidth="0.8" />
+          <line x1="34" y1="77" x2="34" y2="72" stroke="#C85A1E" strokeWidth="0.7" />
+          <circle cx="80" cy="80" r="2.5" fill="none" stroke="#C85A1E" strokeWidth="0.8" />
+          <line x1="80" y1="77" x2="80" y2="72" stroke="#C85A1E" strokeWidth="0.7" />
+          <circle cx="126" cy="80" r="2.5" fill="none" stroke="#C85A1E" strokeWidth="0.8" />
+          <line x1="126" y1="77" x2="126" y2="72" stroke="#C85A1E" strokeWidth="0.7" />
+        </svg>
+      )
+    case 'kedarnath':
+      return (
+        <svg viewBox="0 0 160 110" width="100%" height="100%">
+          <line x1="10" y1="93" x2="150" y2="93" stroke="#C85A1E" strokeWidth="1.5" />
+          <polyline points="10,93 32,38 55,62 80,18 105,50 128,32 150,93" fill="none" stroke="#C85A1E" strokeWidth="1.2" strokeLinejoin="round" />
+          <polyline points="73,26 80,18 87,26" fill="none" stroke="#C85A1E" strokeWidth="0.7" />
+          <polyline points="122,39 128,32 134,40" fill="none" stroke="#C85A1E" strokeWidth="0.7" />
+          <polyline points="26,45 32,38 38,46" fill="none" stroke="#C85A1E" strokeWidth="0.7" />
+          <rect x="58" y="68" width="44" height="25" fill="none" stroke="#C85A1E" strokeWidth="1.5" />
+          <polygon points="58,68 80,40 102,68" fill="none" stroke="#C85A1E" strokeWidth="1.5" />
+          <polygon points="63,68 80,48 97,68" fill="none" stroke="#C85A1E" strokeWidth="0.7" />
+          <polygon points="68,68 80,55 92,68" fill="none" stroke="#C85A1E" strokeWidth="0.5" />
+          <line x1="80" y1="40" x2="80" y2="30" stroke="#C85A1E" strokeWidth="1.2" />
+          <ellipse cx="80" cy="29" rx="4" ry="2" fill="none" stroke="#C85A1E" strokeWidth="1" />
+          <line x1="80" y1="27" x2="80" y2="22" stroke="#C85A1E" strokeWidth="1" />
+          <circle cx="80" cy="21" r="2" fill="#C85A1E" />
+          <path d="M71,93 L71,79 Q80,72 89,79 L89,93" fill="none" stroke="#C85A1E" strokeWidth="1" />
+          <line x1="60" y1="79" x2="100" y2="79" stroke="#C85A1E" strokeWidth="0.5" />
+          <line x1="60" y1="84" x2="100" y2="84" stroke="#C85A1E" strokeWidth="0.5" />
+          <rect x="53" y="93" width="54" height="4" fill="none" stroke="#C85A1E" strokeWidth="1" />
+          <rect x="47" y="97" width="66" height="4" fill="none" stroke="#C85A1E" strokeWidth="0.8" />
+        </svg>
+      )
+    case 'vaishno-devi':
+      return (
+        <svg viewBox="0 0 160 110" width="100%" height="100%">
+          <polyline points="15,95 45,42 68,62 95,18 122,52 148,95" fill="none" stroke="#C85A1E" strokeWidth="1.5" strokeLinejoin="round" />
+          <line x1="95" y1="18" x2="95" y2="6" stroke="#C85A1E" strokeWidth="1.2" />
+          <polygon points="95,6 106,10 95,14" fill="none" stroke="#C85A1E" strokeWidth="1" />
+          <line x1="45" y1="42" x2="45" y2="30" stroke="#C85A1E" strokeWidth="1" />
+          <line x1="41" y1="34" x2="45" y2="29" stroke="#C85A1E" strokeWidth="1" />
+          <line x1="49" y1="34" x2="45" y2="29" stroke="#C85A1E" strokeWidth="1" />
+          <path d="M78,95 Q95,72 112,95" fill="none" stroke="#C85A1E" strokeWidth="1.5" />
+          <line x1="95" y1="95" x2="95" y2="78" stroke="#C85A1E" strokeWidth="0.7" />
+          <path d="M60,95 L65,89 L70,89 L75,83 L80,83 L85,78" fill="none" stroke="#C85A1E" strokeWidth="0.8" />
+          <path d="M105,78 L110,83 L115,83 L120,89 L125,89 L130,95" fill="none" stroke="#C85A1E" strokeWidth="0.8" />
+          <line x1="10" y1="95" x2="150" y2="95" stroke="#C85A1E" strokeWidth="1.5" />
+          <path d="M10,102 Q50,98 95,103 Q130,107 150,102" fill="none" stroke="#C85A1E" strokeWidth="0.8" />
+          <circle cx="95" cy="5" r="2" fill="#C85A1E" />
+        </svg>
+      )
+    default:
+      return (
+        <svg viewBox="0 0 160 110" width="100%" height="100%">
+          <circle cx="80" cy="55" r="30" fill="none" stroke="#C85A1E" strokeWidth="1.5" />
+          <circle cx="80" cy="55" r="2" fill="#C85A1E" />
+        </svg>
+      )
+  }
 }
 
 const JOURNEYS: Journey[] = [
@@ -29,9 +115,7 @@ const JOURNEYS: Journey[] = [
     title: 'Kashi Darshan Yatra',
     price: '₹18,500',
     whatsappMessage: 'I am interested in the Kashi Darshan Yatra (5 days, from ₹18,500)',
-    placeholderGradient:
-      'radial-gradient(ellipse at 30% 60%, rgba(255,180,60,0.5) 0%, transparent 60%), ' +
-      'linear-gradient(180deg, #C86B1A 0%, #9B4A15 35%, #5C2810 70%, #3A1A08 100%)',
+    illustrationId: 'kashi',
     imageAlt: 'Dawn light over the ghats at Varanasi',
   },
   {
@@ -42,9 +126,7 @@ const JOURNEYS: Journey[] = [
     title: 'Kedarnath Shiva Yatra',
     price: '₹32,000',
     whatsappMessage: 'I am interested in the Kedarnath Shiva Yatra (7 days, from ₹32,000)',
-    placeholderGradient:
-      'radial-gradient(ellipse at 50% 30%, rgba(200,220,240,0.4) 0%, transparent 55%), ' +
-      'linear-gradient(180deg, #4A5A78 0%, #6B5040 45%, #3A2818 75%, #221408 100%)',
+    illustrationId: 'kedarnath',
     imageAlt: 'Kedarnath temple in the Himalayas',
   },
   {
@@ -55,9 +137,7 @@ const JOURNEYS: Journey[] = [
     title: 'Vaishno Devi Sankalp',
     price: '₹14,200',
     whatsappMessage: 'I am interested in the Vaishno Devi Sankalp (4 days, from ₹14,200)',
-    placeholderGradient:
-      'radial-gradient(ellipse at 40% 40%, rgba(230,160,100,0.5) 0%, transparent 55%), ' +
-      'linear-gradient(180deg, #9B6040 0%, #7B4828 40%, #4A2A14 70%, #2C1608 100%)',
+    illustrationId: 'vaishno-devi',
     imageAlt: 'Vaishno Devi shrine in the Trikuta mountains',
   },
 ]
@@ -103,69 +183,45 @@ function JourneyCard({ journey, visible, delay }: JourneyCardProps) {
         cursor: 'pointer',
       }}
     >
-      {/* ── Image area ── */}
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', overflow: 'hidden' }}>
-        {/* Inner wrapper animates scale on hover */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            transform: hovered ? 'scale(1.04)' : 'scale(1)',
-            transition: 'transform 400ms cubic-bezier(0.22,1,0.36,1)',
-          }}
-        >
-          {journey.imageSrc ? (
-            <Image
-              src={journey.imageSrc}
-              alt={journey.imageAlt}
-              fill
-              style={{ objectFit: 'cover' }}
-              sizes="(min-width: 1024px) 33vw, 100vw"
-              placeholder="blur"
-              blurDataURL="data:image/gif;base64,R0lGODlhAQABAIAAAP/bxAAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=="
-            />
-          ) : (
-            <div style={{ position: 'absolute', inset: 0, background: journey.placeholderGradient }}>
-              {/* Noise texture on placeholder */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  opacity: 0.06,
-                  backgroundImage:
-                    "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-                  backgroundSize: '200px 200px',
-                }}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Bottom gradient overlay */}
-        <div
-          aria-hidden
-          style={{
-            position: 'absolute',
-            bottom: 0, left: 0, right: 0,
-            height: '65%',
-            background: 'linear-gradient(to bottom, transparent 0%, rgba(30,14,6,0.52) 100%)',
-            pointerEvents: 'none',
-          }}
-        />
+      {/* ── Illustration area ── */}
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          background: '#EDE4CC',
+          padding: '16px 20px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 160,
+          overflow: 'hidden',
+          transform: hovered ? 'scale(1.02)' : 'scale(1)',
+          transition: 'transform 400ms cubic-bezier(0.22,1,0.36,1)',
+        }}
+      >
+        {journey.imageSrc ? (
+          <Image
+            src={journey.imageSrc}
+            alt={journey.imageAlt}
+            fill
+            style={{ objectFit: 'cover' }}
+            sizes="(min-width: 1024px) 33vw, 100vw"
+          />
+        ) : (
+          <JourneyIllustration id={journey.illustrationId} />
+        )}
 
         {/* Days badge — top right */}
         <span
           style={{
-            position: 'absolute', top: 12, right: 12,
-            padding: '4px 10px',
+            position: 'absolute', top: 10, right: 10,
+            padding: '3px 9px',
             borderRadius: 9999,
-            background: 'rgba(253,248,238,0.15)',
-            backdropFilter: 'blur(6px)',
-            WebkitBackdropFilter: 'blur(6px)',
-            border: '0.5px solid rgba(255,255,255,0.20)',
+            background: 'rgba(44,26,14,0.12)',
+            border: '0.5px solid rgba(200,90,30,0.25)',
             fontSize: 10, fontWeight: 600,
             fontFamily: 'var(--font-body)',
-            color: 'rgba(253,248,238,0.85)',
+            color: '#7A4E28',
             letterSpacing: '0.3px',
           }}
         >
@@ -175,18 +231,16 @@ function JourneyCard({ journey, visible, delay }: JourneyCardProps) {
         {/* Category badge — bottom left */}
         <span
           style={{
-            position: 'absolute', bottom: 14, left: 14,
-            padding: '5px 11px',
+            position: 'absolute', bottom: 10, left: 10,
+            padding: '4px 10px',
             borderRadius: 9999,
-            background: 'rgba(20,10,4,0.60)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            border: '0.5px solid rgba(255,255,255,0.15)',
+            background: 'rgba(200,90,30,0.12)',
+            border: '0.5px solid rgba(200,90,30,0.30)',
             fontSize: 9.5, fontWeight: 600,
             fontFamily: 'var(--font-body)',
             letterSpacing: '2px',
             textTransform: 'uppercase',
-            color: 'rgba(253,248,238,0.92)',
+            color: '#C85A1E',
           }}
         >
           {journey.category}
