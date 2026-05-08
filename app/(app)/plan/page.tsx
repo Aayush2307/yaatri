@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import BackButton from '@/components/BackButton';
-import { BottomNav } from '@/components/layout/BottomNav';
 import { getSupabaseClient } from '@/lib/supabaseClient';
 import { openMeeraWhatsApp } from '@/lib/whatsapp';
 
@@ -326,7 +325,6 @@ export default function PlanPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0"><BottomNav active="plan" /></div>
     </main>
   );
 }

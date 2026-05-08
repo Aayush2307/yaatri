@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { BottomNav } from '@/components/layout/BottomNav';
 import { circuits } from '@/lib/mockData';
 import BackButton from '@/components/BackButton';
 
@@ -33,7 +32,6 @@ export default function DestinationPage() {
         </Link>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0"><BottomNav active="explore" /></div>
     </main>
   );
 }

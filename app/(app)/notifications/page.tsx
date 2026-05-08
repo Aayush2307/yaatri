@@ -1,6 +1,5 @@
 'use client';
 
-import { BottomNav } from '@/components/layout/BottomNav';
 import BackButton from '@/components/BackButton';
 
 const notifications = [
@@ -27,7 +26,6 @@ export default function NotificationsPage() {
         ))}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0"><BottomNav active="home" /></div>
     </main>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { BottomNav } from '@/components/layout/BottomNav';
 import BackButton from '@/components/BackButton';
 import { getSupabaseClient } from '@/lib/supabaseClient';
 import { openMeeraWhatsApp } from '@/lib/whatsapp';
@@ -189,7 +188,6 @@ export default function AccountPage() {
         {savedAt && <p className="text-center text-xs text-[#8A7665]">Saved at {savedAt}</p>}
         {saveMessage && <p className="text-center text-xs text-[#8A7665]">{saveMessage}</p>}
       </div>
-      <div className="fixed bottom-0 left-0 right-0"><BottomNav active="account" /></div>
     </main>
   );
 }

@@ -1,6 +1,5 @@
 'use client';
 
-import { BottomNav } from '@/components/layout/BottomNav';
 import { panchangCard } from '@/lib/mockData';
 import BackButton from '@/components/BackButton';
 
@@ -19,7 +18,6 @@ export default function PanchangPage() {
           <p className="pt-2 text-text-muted">Best for darshan departures and sankalp rituals.</p>
         </section>
       </div>
-      <div className="fixed bottom-0 left-0 right-0"><BottomNav active="home" /></div>
     </main>
   );
 }

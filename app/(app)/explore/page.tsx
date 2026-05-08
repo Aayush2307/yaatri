@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BottomNav } from '@/components/layout/BottomNav';
 import BackButton from '@/components/BackButton';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -413,7 +412,7 @@ export default function ExplorePage() {
     : YATRAS.filter((y) => y.tradition === filter);
 
   return (
-    <main className="min-h-[100dvh] pb-24 flex flex-col" style={{ background: '#F5EDD9', color: '#2C1A0E' }}>
+    <main className="min-h-[100dvh] flex flex-col" style={{ background: '#F5EDD9', color: '#2C1A0E' }}>
       <div className="mx-auto w-full px-4 md:px-8 lg:px-12 pt-6 md:pt-10 flex-1">
         <BackButton />
 
@@ -507,9 +506,6 @@ export default function ExplorePage() {
         </section>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0">
-        <BottomNav active="explore" />
-      </div>
     </main>
   );
 }

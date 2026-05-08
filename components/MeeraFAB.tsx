@@ -78,18 +78,16 @@ export default function MeeraFAB() {
           transition: 'transform 150ms ease, box-shadow 150ms ease',
         }}
       >
-        <span
-          style={{
-            fontFamily: 'var(--font-devanagari)',
-            fontSize: 26,
-            color: '#FDF8EE',
-            lineHeight: 1,
-            marginTop: 2,
-            userSelect: 'none',
-          }}
-        >
-          म
-        </span>
+        <div className="relative flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-[#C85A1E] opacity-20 scale-[1.35] blur-sm pointer-events-none" />
+          <span
+            className="relative z-10 font-serif text-white"
+            style={{ fontSize: '1.4rem', lineHeight: 1 }}
+            aria-label="Meera"
+          >
+            म
+          </span>
+        </div>
       </button>
     </div>
   )
