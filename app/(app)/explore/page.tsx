@@ -26,12 +26,19 @@ function CircuitImage({ src, alt }: { src?: string; alt: string }) {
 export default function ExplorePage() {
   const router = useRouter();
 
-  const handleCircuitClick = (id: string, title: string) => {
+  const existingRoutes = new Set(['/explore/char-dham', '/explore/shakti-peethas']);
+
+  const handleCircuitClick = (id: string, title: string, href: string) => {
     localStorage.setItem(
       'yaatra_yatra',
       JSON.stringify({ selectedCircuit: id, selectedCircuitTitle: title, selectedAt: new Date().toISOString() }),
     );
-    router.push(`/yatra/${id}`);
+
+    if (existingRoutes.has(href)) {
+      router.push(href);
+      return;
+    }
+    router.push('/plan');
   };
 
   return (
@@ -53,7 +60,7 @@ export default function ExplorePage() {
             <button
               key={circuit.id}
               type="button"
-              onClick={() => handleCircuitClick(circuit.id, circuit.title)}
+              onClick={() => handleCircuitClick(circuit.id, circuit.title, circuit.href)}
               className="block w-full rounded-3xl border border-[rgba(43,33,25,0.12)] bg-[#FFFCF7] p-4 text-left shadow-md"
             >
               <CircuitImage src={circuit.image} alt={circuit.title} />

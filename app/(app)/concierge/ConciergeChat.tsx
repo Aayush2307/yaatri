@@ -25,20 +25,22 @@ const PROMPT_CHIPS = [
 
 // ── component ─────────────────────────────────────────────────────────────────
 
-export function ConciergeChat({ prefillQuery }: ConciergeChatProps = {}) {
+export function ConciergeChat({ prefillQuery = '' }: ConciergeChatProps) {
   const { messages, isStreaming, error, send, clearError } = useMeeraChat();
   const [draft, setDraft] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
+  const prefillSentRef = useRef(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
-    const q = prefillQuery?.trim();
-    if (q) void send(q);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (prefillQuery && !prefillSentRef.current) {
+      prefillSentRef.current = true;
+      void send(prefillQuery);
+    }
+  }, [prefillQuery, send]);
 
   const handleSend = (e?: FormEvent) => {
     e?.preventDefault();

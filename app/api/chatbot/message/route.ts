@@ -1,52 +1,23 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { Redis } from '@upstash/redis';
 import { db } from '@/lib/db';
-import { verifyJWT } from '@/lib/jwt';
 
-// Fix 8: Log missing env vars at module load so Vercel build logs surface them immediately
-const MISSING_VARS = ['GROQ_API_KEY', 'GROQ_API_URL'].filter((k) => !process.env[k]);
-if (MISSING_VARS.length) {
-  console.error(`[chatbot] Missing required env vars: ${MISSING_VARS.join(', ')}`);
-}
+type RateLimitState = {
+  count: number;
+  resetAt: number;
+};
 
+const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 20;
 const MAX_MESSAGE_LENGTH = 500;
+const rateLimitStore = new Map<string, RateLimitState>();
 const GROQ_API_URL = process.env.GROQ_API_URL || 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
-
-// Fix 3: Upstash Redis rate limiter — gracefully disabled when credentials are absent
-const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN,
-      })
-    : null;
-
-if (!redis) {
-  console.warn('[chatbot] UPSTASH_REDIS_REST_URL/TOKEN not configured — rate limiting disabled');
-}
-
-async function checkRateLimit(ip: string): Promise<boolean> {
-  if (!redis) return true;
-  try {
-    const key = `chatbot:ratelimit:${ip}`;
-    const count = await redis.incr(key);
-    if (count === 1) await redis.expire(key, 60); // 1-minute sliding window
-    return count <= RATE_LIMIT_MAX;
-  } catch {
-    console.warn('[chatbot] Redis rate limit check failed — allowing request');
-    return true;
-  }
-}
 
 const SYSTEM_PROMPT =
   'You are a premium spiritual travel concierge for the Yaatri platform. Your responses must be human-readable, conversational, and meticulously formatted. Use clean spacing, headings, and bullet points. Never expose backend JSON, object logs, or technical data inside the message. Convert all API results into a fluid, user-friendly summary. Keep emojis minimal and professional.';
 
 const PLANNER_PROMPT =
   'You are an AI planner. Decide which tools to call based on the user\'s message and recent conversation context. Return a JSON object matching this exact schema: {"message": string, "intent": string, "actions": [{"type":"redirect","label": string, "url": string}], "toolCalls": [{"name": "search_temples|get_muhurat|search_routes|booking_options", "params": {"query": "search text", "date": "optional date", "location": "optional location"}}]}. Do not include markdown code blocks. For `search_temples`, always supply a `query` parameter (e.g., {"query": "Delhi"} or {"query": "Akshardham"}). If no tool is needed, leave `toolCalls` empty.';
-
-type MsgArray = Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
 
 type ChatAction = {
   type: 'redirect';
@@ -72,6 +43,25 @@ function getClientKey(request: NextRequest) {
   return ip || request.headers.get('x-real-ip') || 'anonymous';
 }
 
+function rateLimit(key: string) {
+  const now = Date.now();
+  const existing = rateLimitStore.get(key);
+
+  if (!existing || now > existing.resetAt) {
+    const nextState = { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS };
+    rateLimitStore.set(key, nextState);
+    return { ok: true, remaining: RATE_LIMIT_MAX - 1 };
+  }
+
+  if (existing.count >= RATE_LIMIT_MAX) {
+    return { ok: false, remaining: 0, resetAt: existing.resetAt };
+  }
+
+  existing.count += 1;
+  rateLimitStore.set(key, existing);
+  return { ok: true, remaining: RATE_LIMIT_MAX - existing.count };
+}
+
 function isDisallowedContent(message: string) {
   const text = message.toLowerCase();
   if (/\b(kill|murder|suicide|self-harm|bomb|terror)\b/.test(text)) return true;
@@ -80,7 +70,7 @@ function isDisallowedContent(message: string) {
   return false;
 }
 
-async function callGroq(messages: MsgArray, forceJson = false) {
+async function callGroq(messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>, forceJson = false) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return { ok: false, error: 'Chatbot is not configured. Missing GROQ_API_KEY.' } as const;
@@ -115,50 +105,6 @@ async function callGroq(messages: MsgArray, forceJson = false) {
   }
 
   return { ok: true, content } as const;
-}
-
-// Fix 4: Groq → Anthropic fallback. Only attempted when ANTHROPIC_API_KEY is set.
-async function callLLM(
-  messages: MsgArray,
-  forceJson = false,
-): Promise<{ ok: true; content: string } | { ok: false; error: string }> {
-  const groqResult = await callGroq(messages, forceJson);
-  if (groqResult.ok) return groqResult;
-
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (!anthropicKey) return groqResult; // propagate original error if no fallback configured
-
-  try {
-    const model = process.env.MEERA_MODEL || 'claude-haiku-4-5-20251001';
-    const systemParts = messages.filter((m) => m.role === 'system').map((m) => m.content);
-    const chatMessages = messages
-      .filter((m) => m.role !== 'system')
-      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
-
-    const systemPrompt = forceJson
-      ? `${systemParts.join('\n\n')}\n\nAlways respond with valid JSON only. No markdown fences.`
-      : systemParts.join('\n\n');
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({ model, max_tokens: 1024, system: systemPrompt, messages: chatMessages }),
-    });
-
-    if (res.ok) {
-      const data = (await res.json()) as { content?: Array<{ text?: string }> };
-      const content = data.content?.[0]?.text?.trim();
-      if (content) return { ok: true, content };
-    }
-  } catch {
-    // Anthropic fallback failed — return original Groq error below
-  }
-
-  return groqResult;
 }
 
 function tryParsePlan(raw: string): ChatPlan | null {
@@ -203,7 +149,10 @@ async function runTool(
     headers.set('Authorization', `Bearer ${authToken}`);
   }
 
-  const response = await fetch(url.toString(), { method: 'GET', headers });
+  const response = await fetch(url.toString(), {
+    method: 'GET',
+    headers,
+  });
   if (!response.ok) {
     return { ok: false, error: 'Tool request failed.' };
   }
@@ -216,14 +165,13 @@ async function runTool(
   return { ok: true, data: data.data };
 }
 
-// Fix 5: Accept userId so new sessions are linked to the authenticated user
-async function resolveSession(sessionId?: string | null, userId?: string | null): Promise<string | null> {
+async function resolveSession(sessionId?: string | null): Promise<string | null> {
   try {
     if (sessionId) {
       const existing = await db.chatSession.findUnique({ where: { id: sessionId } });
       if (existing) return existing.id;
     }
-    const created = await db.chatSession.create({ data: userId ? { userId } : {} });
+    const created = await db.chatSession.create({ data: {} });
     return created.id;
   } catch {
     // DB not yet migrated or Prisma client not generated — session persistence skipped.
@@ -233,8 +181,8 @@ async function resolveSession(sessionId?: string | null, userId?: string | null)
 
 export async function POST(request: NextRequest) {
   const clientKey = getClientKey(request);
-  const allowed = await checkRateLimit(clientKey);
-  if (!allowed) {
+  const limit = rateLimit(clientKey);
+  if (!limit.ok) {
     return NextResponse.json(
       { message: 'Too many requests. Please wait a moment and try again.' },
       { status: 429 },
@@ -257,17 +205,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'I cannot help with that. I can assist with Yaatri travel and temple planning.' }, { status: 400 });
   }
 
-  // Fix 5: decode JWT (supports both { userId } and { id } payload shapes)
-  let userId: string | null = null;
-  if (payload?.authToken) {
-    const decoded = verifyJWT(payload.authToken);
-    if (decoded && typeof decoded === 'object') {
-      const d = decoded as Record<string, unknown>;
-      userId = (d.userId as string | null) ?? (d.id as string | null) ?? null;
-    }
-  }
-
-  const sessionId = await resolveSession(payload?.sessionId, userId);
+  const sessionId = await resolveSession(payload?.sessionId);
 
   // Fetch conversation history for context (gracefully skipped if DB unavailable)
   let history: Array<{ role: 'user' | 'assistant'; content: string }> = [];
@@ -298,15 +236,12 @@ export async function POST(request: NextRequest) {
     // DB persistence unavailable — continuing without saving message.
   }
 
-  const planResult = await callLLM(
-    [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'system', content: PLANNER_PROMPT },
-      ...history,
-      { role: 'user', content: message },
-    ],
-    true,
-  );
+  const planResult = await callGroq([
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: PLANNER_PROMPT },
+    ...history,
+    { role: 'user', content: message },
+  ], true);
 
   if (!planResult.ok) {
     return NextResponse.json({ message: planResult.error, actions: [], intent: 'error', sessionId }, { status: 502 });
@@ -329,17 +264,13 @@ export async function POST(request: NextRequest) {
     toolSummary = JSON.stringify(results);
   }
 
-  // Fix 1 (preserved): Tool results system msg placed BEFORE history to satisfy Groq's message ordering
-  const finalResult = await callLLM(
-    [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'system', content: 'Use the tool results to craft a final JSON response. Structure it exactly like PLANNER_PROMPT. The `message` field MUST be beautifully formatted Markdown (headings, lists) to be shown directly to the user. Never include JSON syntax in the `message` string. Return a valid JSON object.' },
-      { role: 'system', content: `Tool results: ${toolSummary}` },
-      ...history,
-      { role: 'user', content: message },
-    ],
-    true,
-  );
+  const finalResult = await callGroq([
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: 'Use the tool results to craft a final JSON response. Structure it exactly like PLANNER_PROMPT. The `message` field MUST be beautifully formatted Markdown (headings, lists) to be shown directly to the user. Never include JSON syntax in the `message` string. Return a valid JSON object.' },
+    ...history,
+    { role: 'system', content: `Tool results: ${toolSummary}` },
+    { role: 'user', content: message },
+  ], true);
 
   if (!finalResult.ok) {
     return NextResponse.json({ message: finalResult.error, actions: [], intent: 'error', sessionId }, { status: 502 });

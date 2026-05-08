@@ -2,7 +2,6 @@
 
 import React from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import { useStaggerReveal } from '@/hooks/useStaggerReveal'
 
 /* ─── Types & Data ─── */
@@ -79,12 +78,11 @@ interface JourneyCardProps {
 }
 
 function JourneyCard({ journey, visible, delay }: JourneyCardProps) {
-  const router = useRouter()
   const [hovered, setHovered] = React.useState(false)
 
   return (
     <article
-      onClick={() => router.push('/explore')}
+      onClick={() => openWhatsApp(journey.whatsappMessage)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{

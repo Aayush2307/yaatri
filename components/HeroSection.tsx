@@ -3,13 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-const WHATSAPP_NUMBER = '918153026157'
-
-function openWhatsApp(message: string) {
-  const encoded = encodeURIComponent(message)
-  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, '_blank')
-}
-
 const CHIPS = [
   { id: 'varanasi',     icon: '🕉',  label: 'Plan my Varanasi yatra',      message: 'I want to plan my Varanasi yatra' },
   { id: 'kashi-timing', icon: '🌅',  label: 'Best time to visit Kashi',     message: 'What is the best time to visit Kashi?' },
@@ -60,14 +53,9 @@ export default function HeroSection() {
   const router = useRouter()
   const [inputValue, setInputValue] = useState('')
 
-  const goToConcierge = (text: string) => {
-    const q = text.trim()
-    if (!q) return
-    router.push(`/concierge?q=${encodeURIComponent(q)}`)
-  }
-
   const handleSend = () => {
-    goToConcierge(inputValue)
+    const text = inputValue.trim()
+    if (text) router.push(`/concierge?q=${encodeURIComponent(text)}`)
   }
 
   return (
@@ -199,7 +187,7 @@ export default function HeroSection() {
               <button
                 key={chip.id}
                 className="hero-chip"
-                onClick={() => goToConcierge(chip.message)}
+                onClick={() => router.push(`/concierge?q=${encodeURIComponent(chip.message)}`)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '8px 15px',
