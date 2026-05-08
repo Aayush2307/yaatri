@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { useStaggerReveal } from '@/hooks/useStaggerReveal'
 
 /* ─── Types & Data ─── */
@@ -62,12 +63,6 @@ const JOURNEYS: Journey[] = [
 ]
 
 const STAGGER_DELAYS = [0, 120, 240]
-const WHATSAPP_NUMBER = '918153026157'
-
-function openWhatsApp(message: string) {
-  const encoded = encodeURIComponent(message)
-  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, '_blank')
-}
 
 /* ─── Journey Card ─── */
 
@@ -78,11 +73,12 @@ interface JourneyCardProps {
 }
 
 function JourneyCard({ journey, visible, delay }: JourneyCardProps) {
+  const router = useRouter()
   const [hovered, setHovered] = React.useState(false)
 
   return (
     <article
-      onClick={() => openWhatsApp(journey.whatsappMessage)}
+      onClick={() => router.push('/explore')}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -275,7 +271,7 @@ function JourneyCard({ journey, visible, delay }: JourneyCardProps) {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              openWhatsApp(journey.whatsappMessage)
+              router.push(`/concierge?q=${encodeURIComponent('I want to know more about ' + journey.title)}`)
             }}
             style={{
               display: 'inline-flex',
