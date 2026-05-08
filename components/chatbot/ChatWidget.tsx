@@ -11,10 +11,13 @@ export function ChatWidget() {
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-
-  if (pathname?.startsWith('/concierge')) return null;
   const { messages, isSending, sendMessage } = useChatbot();
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, isOpen]);
 
   const quickActions = [
     { label: 'Temple Visit', prompt: 'I want to visit a temple. Please guide me.' },
@@ -22,17 +25,14 @@ export function ChatWidget() {
     { label: 'Track Booking', prompt: 'Check booking status.' },
   ];
 
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages, isOpen]);
-
   const handleAction = (action: ChatAction) => {
     if (action.type === 'redirect') {
       router.push(action.url);
       setIsOpen(false);
     }
   };
+
+  if (pathname?.startsWith('/concierge')) return null;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-50 flex flex-col items-end justify-end px-4 pb-[110px] sm:px-8 sm:pb-8">
