@@ -15,6 +15,40 @@ export class EnvValidationError extends Error {
   }
 }
 
+/**
+ * Validates all env vars required at runtime (Anthropic + Groq + JWT).
+ * Call this at startup to surface config errors before they silently cause
+ * "Meera is unavailable" states in production.
+ */
+export function validateRequiredEnvVars(env: NodeJS.ProcessEnv = process.env): void {
+  const errors: string[] = [];
+
+  const anthropicKey = env.ANTHROPIC_API_KEY;
+  if (!anthropicKey) {
+    errors.push("ANTHROPIC_API_KEY is missing (required for /api/concierge/message).");
+  } else if (!anthropicKey.startsWith("sk-ant-")) {
+    errors.push('ANTHROPIC_API_KEY does not start with "sk-ant-". Verify at https://console.anthropic.com/settings/keys.');
+  }
+
+  const groqKey = env.GROQ_API_KEY;
+  if (!groqKey) {
+    errors.push("GROQ_API_KEY is missing (required for /api/chatbot/message used by Meera chat).");
+  }
+
+  const jwt = env.JWT_SECRET;
+  if (!jwt) {
+    errors.push("JWT_SECRET is missing. Generate with: openssl rand -base64 48");
+  } else if (jwt.length < 32) {
+    errors.push(`JWT_SECRET is too short (${jwt.length} chars, min 32).`);
+  }
+
+  if (errors.length > 0) {
+    throw new EnvValidationError(
+      "Required env vars missing:\n  - " + errors.join("\n  - "),
+    );
+  }
+}
+
 export function validateMeeraEnv(env: NodeJS.ProcessEnv = process.env): void {
   const errors: string[] = [];
 

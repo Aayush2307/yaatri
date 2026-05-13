@@ -9,11 +9,36 @@ function newId() {
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
+const RETRY_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1000;
+const REQUEST_TIMEOUT_MS = 8000;
+
+async function fetchWithRetry(input: string, init: RequestInit): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt++) {
+    if (attempt > 0) {
+      await new Promise<void>((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+    }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch(input, { ...init, signal: controller.signal });
+      clearTimeout(timeoutId);
+      return res;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      lastError = err;
+    }
+  }
+  throw lastError;
+}
+
 export interface UseMeeraChatReturn {
   messages: MeeraMessage[];
   isStreaming: boolean;
   error: MeeraError | null;
   send: (text: string) => Promise<void>;
+  retry: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -23,24 +48,11 @@ export function useMeeraChat(): UseMeeraChatReturn {
   const [error, setError] = useState<MeeraError | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const isLoadingRef = useRef(false);
+  const lastTextRef = useRef<string | null>(null);
 
-  const send = useCallback(async (text: string) => {
-    if (isLoadingRef.current) return;
-    isLoadingRef.current = true;
-    setIsStreaming(true);
-    setError(null);
-
-    const userMsg: MeeraMessage = { id: newId(), role: 'user', text };
-    setMessages((prev) => [...prev, userMsg]);
-
-    const assistantId = newId();
-    setMessages((prev) => [
-      ...prev,
-      { id: assistantId, role: 'assistant', text: '', streaming: true },
-    ]);
-
+  const attemptFetch = useCallback(async (text: string, assistantId: string) => {
     try {
-      const res = await fetch('/api/chatbot/message', {
+      const res = await fetchWithRetry('/api/chatbot/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, sessionId: sessionIdRef.current }),
@@ -53,10 +65,7 @@ export function useMeeraChat(): UseMeeraChatReturn {
         return;
       }
 
-      const data = (await res.json()) as {
-        message: string;
-        sessionId?: string | null;
-      };
+      const data = (await res.json()) as { message: string; sessionId?: string | null };
 
       if (data.sessionId) sessionIdRef.current = data.sessionId;
 
@@ -74,7 +83,44 @@ export function useMeeraChat(): UseMeeraChatReturn {
     }
   }, []);
 
+  const send = useCallback(
+    async (text: string) => {
+      if (isLoadingRef.current) return;
+      isLoadingRef.current = true;
+      setIsStreaming(true);
+      setError(null);
+      lastTextRef.current = text;
+
+      setMessages((prev) => [...prev, { id: newId(), role: 'user', text }]);
+      const assistantId = newId();
+      setMessages((prev) => [
+        ...prev,
+        { id: assistantId, role: 'assistant', text: '', streaming: true },
+      ]);
+
+      await attemptFetch(text, assistantId);
+    },
+    [attemptFetch],
+  );
+
+  // Re-sends the last failed message without adding a duplicate user bubble.
+  const retry = useCallback(async () => {
+    const text = lastTextRef.current;
+    if (!text || isLoadingRef.current) return;
+    isLoadingRef.current = true;
+    setIsStreaming(true);
+    setError(null);
+
+    const assistantId = newId();
+    setMessages((prev) => [
+      ...prev,
+      { id: assistantId, role: 'assistant', text: '', streaming: true },
+    ]);
+
+    await attemptFetch(text, assistantId);
+  }, [attemptFetch]);
+
   const clearError = useCallback(() => setError(null), []);
 
-  return { messages, isStreaming, error, send, clearError };
+  return { messages, isStreaming, error, send, retry, clearError };
 }
