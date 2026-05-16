@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useMeeraChat } from '@/hooks/useMeeraChat';
+import { usePlannerStore } from '@/store/plannerStore';
+import { QuickIntake } from '@/components/chat/planning/QuickIntake';
+import { PlanningRouter } from '@/components/chat/planning/PlanningRouter';
 import './concierge-animations.css';
 
 // MEERA HEALTH: If Meera shows 'unavailable' in production, check:
@@ -13,6 +16,14 @@ interface ConciergeChatProps {
   prefillQuery?: string;
 }
 
+type IntentResult = {
+  isPlanningIntent: boolean;
+  destination?: string | null;
+  fromCity?: string | null;
+  travelMonth?: string | null;
+  peopleCount?: number | null;
+};
+
 const WHATSAPP_NUMBER =
   process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') ?? '910000000000';
 
@@ -21,7 +32,16 @@ function buildWhatsAppLink(message: string) {
 }
 
 export function ConciergeChat({ prefillQuery = '' }: ConciergeChatProps) {
-  const { messages, isStreaming, error, send, retry, clearError } = useMeeraChat();
+  const { messages, isStreaming, error, send, retry, clearError, addMessage } = useMeeraChat();
+  const {
+    concierge,
+    setPlanningMode,
+    setIntake,
+    setConcierge,
+    resetConcierge,
+  } = usePlannerStore();
+  const { planningMode, intakeComplete, destination, fromCity, travelMonth } = concierge;
+
   const [draft, setDraft] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const prefillSentRef = useRef(false);
@@ -37,12 +57,35 @@ export function ConciergeChat({ prefillQuery = '' }: ConciergeChatProps) {
     }
   }, [prefillQuery, send]);
 
-  const handleSend = (e?: FormEvent) => {
+  const handleSend = async (e?: FormEvent) => {
     e?.preventDefault();
     const text = draft.trim();
     if (!text || isStreaming) return;
     setDraft('');
     void send(text);
+
+    // Detect travel planning intent server-side (keeps API key safe)
+    try {
+      const res = await fetch('/api/intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+      if (res.ok) {
+        const intent = (await res.json()) as IntentResult;
+        if (intent.isPlanningIntent) {
+          setPlanningMode(true);
+          const patch: Partial<typeof concierge> = {};
+          if (intent.destination) patch.destination = intent.destination;
+          if (intent.fromCity) patch.fromCity = intent.fromCity;
+          if (intent.travelMonth) patch.travelMonth = intent.travelMonth;
+          if (intent.peopleCount) patch.peopleCount = intent.peopleCount;
+          if (Object.keys(patch).length > 0) setConcierge(patch);
+        }
+      }
+    } catch {
+      // Intent detection failed silently — no planning mode triggered
+    }
   };
 
   const lastUserText =
@@ -79,6 +122,21 @@ export function ConciergeChat({ prefillQuery = '' }: ConciergeChatProps) {
           </p>
           <p className="text-[#F2C97E] text-xs font-sans">● Online now</p>
         </div>
+
+        {/* Plan a Yatra button */}
+        {!planningMode && (
+          <button
+            type="button"
+            onClick={() => {
+              resetConcierge();
+              setPlanningMode(true);
+            }}
+            className="flex-shrink-0 px-3 py-1.5 rounded-full text-[#FBF5E8] text-xs font-semibold transition-opacity hover:opacity-90"
+            style={{ background: 'rgba(200, 90, 30, 0.75)', border: '1px solid rgba(242, 201, 126, 0.4)' }}
+          >
+            Plan a Yatra
+          </button>
+        )}
 
         <a
           href={buildWhatsAppLink(lastUserText)}
@@ -214,57 +272,98 @@ export function ConciergeChat({ prefillQuery = '' }: ConciergeChatProps) {
         <div ref={bottomRef} />
       </div>
 
-      {/* COMPOSER BAR */}
-      <div
-        className="flex-shrink-0 flex items-center gap-3 px-4 py-3 backdrop-blur-md border-t"
-        style={{
-          background: 'rgba(237, 228, 204, 0.92)',
-          borderColor: 'rgba(242, 201, 126, 0.5)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0.75rem)',
-        }}
-      >
-        <input
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-          placeholder="Ask Meera…"
-          disabled={isStreaming}
-          className="flex-1 rounded-full px-4 py-2.5 text-sm font-sans outline-none border disabled:opacity-60"
+      {/* PLANNING PANEL — replaces composer when planning mode is active */}
+      {planningMode ? (
+        <div
+          className="flex-shrink-0 overflow-y-auto border-t"
           style={{
-            background: 'rgba(251, 245, 232, 0.8)',
-            borderColor: 'rgba(242, 201, 126, 0.4)',
-            color: '#2C1A0E',
+            maxHeight: '68vh',
+            background: 'rgba(237, 228, 204, 0.96)',
+            borderColor: 'rgba(242, 201, 126, 0.5)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           }}
-        />
-        <button
-          onClick={handleSend}
-          disabled={!draft.trim() || isStreaming}
-          aria-label="Send message"
-          className="w-11 h-11 rounded-full bg-[#C85A1E] flex items-center justify-center flex-shrink-0 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ boxShadow: '0 2px 8px rgba(200, 90, 30, 0.4)' }}
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#FBF5E8"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+          {/* Planning panel header */}
+          <div className="flex items-center justify-between px-4 pt-3 pb-1 sticky top-0" style={{ background: 'rgba(237,228,204,0.96)' }}>
+            <p className="text-[10px] font-semibold text-[#7A5C42] uppercase tracking-widest">
+              🗺️ Yatra Planner
+            </p>
+            <button
+              type="button"
+              onClick={() => setPlanningMode(false)}
+              className="text-xs text-[#7A5C42] hover:text-[#C85A1E] transition-colors"
+            >
+              × Exit planning
+            </button>
+          </div>
+
+          {!intakeComplete ? (
+            <QuickIntake
+              prefill={{ destination, fromCity, travelMonth }}
+              onComplete={(d, f, m, p) => {
+                setIntake(d, f, m, p);
+                addMessage('assistant', `Wonderful! ${f} → ${d}, ${m}, ${p} ${p === 1 ? 'person' : 'people'}. What shall we sort first — travel, stay, or activities?`);
+              }}
+            />
+          ) : (
+            <PlanningRouter
+              onMessage={(text) => addMessage('assistant', text)}
+            />
+          )}
+        </div>
+      ) : (
+        /* COMPOSER BAR */
+        <div
+          className="flex-shrink-0 flex items-center gap-3 px-4 py-3 backdrop-blur-md border-t"
+          style={{
+            background: 'rgba(237, 228, 204, 0.92)',
+            borderColor: 'rgba(242, 201, 126, 0.5)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0.75rem)',
+          }}
+        >
+          <input
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                void handleSend();
+              }
+            }}
+            placeholder="Ask Meera…"
+            disabled={isStreaming}
+            className="flex-1 rounded-full px-4 py-2.5 text-sm font-sans outline-none border disabled:opacity-60"
+            style={{
+              background: 'rgba(251, 245, 232, 0.8)',
+              borderColor: 'rgba(242, 201, 126, 0.4)',
+              color: '#2C1A0E',
+            }}
+          />
+          <button
+            onClick={() => void handleSend()}
+            disabled={!draft.trim() || isStreaming}
+            aria-label="Send message"
+            className="w-11 h-11 rounded-full bg-[#C85A1E] flex items-center justify-center flex-shrink-0 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ boxShadow: '0 2px 8px rgba(200, 90, 30, 0.4)' }}
           >
-            <path d="M22 2L11 13" />
-            <path d="M22 2L15 22L11 13L2 9L22 2Z" />
-          </svg>
-        </button>
-      </div>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#FBF5E8"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M22 2L11 13" />
+              <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

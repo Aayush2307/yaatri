@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
   const groqKey = process.env.GROQ_API_KEY;
-  const model = process.env.MEERA_MODEL || 'claude-sonnet-4-6';
+  const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
   const missing: string[] = [];
-  if (!apiKey) missing.push('ANTHROPIC_API_KEY');
   if (!groqKey) missing.push('GROQ_API_KEY');
 
   if (missing.length > 0) {

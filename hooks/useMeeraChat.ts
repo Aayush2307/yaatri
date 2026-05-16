@@ -40,6 +40,7 @@ export interface UseMeeraChatReturn {
   send: (text: string) => Promise<void>;
   retry: () => Promise<void>;
   clearError: () => void;
+  addMessage: (role: MeeraMessage['role'], text: string) => void;
 }
 
 export function useMeeraChat(): UseMeeraChatReturn {
@@ -122,5 +123,9 @@ export function useMeeraChat(): UseMeeraChatReturn {
 
   const clearError = useCallback(() => setError(null), []);
 
-  return { messages, isStreaming, error, send, retry, clearError };
+  const addMessage = useCallback((role: MeeraMessage['role'], text: string) => {
+    setMessages((prev) => [...prev, { id: newId(), role, text }]);
+  }, []);
+
+  return { messages, isStreaming, error, send, retry, clearError, addMessage };
 }

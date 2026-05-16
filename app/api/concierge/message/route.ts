@@ -1,20 +1,21 @@
 /*
  * MEERA DEPLOYMENT CHECKLIST
  * Before deploying, verify in Vercel dashboard → Settings → Environment Variables:
- * - [ ] ANTHROPIC_API_KEY is set for Production environment (format: sk-ant-api03-...)
- * - [ ] GROQ_API_KEY is set for Production environment (used by /api/chatbot/message)
+ * - [ ] GROQ_API_KEY is set for Production environment (get free at console.groq.com/keys)
+ * - [ ] GROQ_MODEL is set (default: llama-3.3-70b-versatile)
  * - [ ] All other required vars from lib/env-check.ts are present
  * - [ ] /api/meera/health returns { status: 'ok' } after deploy
  * - [ ] Meera activates within 3s on /home page in production
  *
  * MEERA HEALTH: If Meera shows 'resting' in production, check:
- * (1) Vercel env vars — GROQ_API_KEY and ANTHROPIC_API_KEY must both be set
+ * (1) Vercel env vars — GROQ_API_KEY must be set
  * (2) /api/meera/health endpoint — should return { status: 'ok' }
  * (3) Vercel function logs for MEERA_CONFIG_MISSING errors
  */
 
-import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest } from 'next/server';
+import { groqProvider, GROQ_MODEL } from '@/services/groq';
+import { streamText } from 'ai';
 
 const MEERA_SYSTEM_PROMPT =
   'You are Meera, a warm, knowledgeable sacred travel guide for Indian pilgrimage circuits (yatras). ' +
@@ -23,7 +24,7 @@ const MEERA_SYSTEM_PROMPT =
   "Use the user's name if known.";
 
 function configMissing() {
-  console.error('[meera] MEERA_CONFIG_MISSING: ANTHROPIC_API_KEY is not set. Check Vercel env vars.');
+  console.error('[meera] MEERA_CONFIG_MISSING: GROQ_API_KEY is not set. Check Vercel env vars.');
   return new Response(
     JSON.stringify({ error: 'MEERA_CONFIG_MISSING', hint: 'Check Vercel env vars' }),
     { status: 503, headers: { 'Content-Type': 'application/json' } },
@@ -40,7 +41,7 @@ function streamFailed(status = 500, detail?: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) return configMissing();
 
     let body: { message?: string } | null = null;
@@ -53,9 +54,6 @@ export async function POST(req: NextRequest) {
     const text = body?.message?.trim();
     if (!text) return streamFailed(400, 'Missing message field');
 
-    const client = new Anthropic({ apiKey });
-    const model = process.env.MEERA_MODEL || 'claude-sonnet-4-6';
-
     const encoder = new TextEncoder();
 
     const readable = new ReadableStream({
@@ -65,29 +63,22 @@ export async function POST(req: NextRequest) {
         };
 
         try {
-          const stream = await client.messages.create({
-            model,
-            max_tokens: 1024,
-            stream: true,
+          const result = await streamText({
+            model: groqProvider(GROQ_MODEL),
             system: MEERA_SYSTEM_PROMPT,
             messages: [{ role: 'user', content: text }],
+            maxOutputTokens: 1024,
+            temperature: 0.7,
           });
 
-          for await (const event of stream) {
-            if (
-              event.type === 'content_block_delta' &&
-              event.delta.type === 'text_delta'
-            ) {
-              write({ type: 'token', text: event.delta.text });
-            }
+          for await (const chunk of result.textStream) {
+            write({ type: 'token', text: chunk });
           }
 
           write({ type: 'done' });
         } catch (err) {
           console.error('[meera] Stream error:', err);
-          const code =
-            err instanceof Anthropic.AuthenticationError ? 'unauthorized' : 'server_error';
-          write({ type: 'error', code });
+          write({ type: 'error', code: 'server_error' });
         } finally {
           controller.close();
         }
