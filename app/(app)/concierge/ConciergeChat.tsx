@@ -14,6 +14,8 @@ import './concierge-animations.css';
 
 interface ConciergeChatProps {
   prefillQuery?: string;
+  prefillYatra?: string;
+  prefillFrom?: string;
 }
 
 type IntentResult = {
@@ -31,20 +33,20 @@ function buildWhatsAppLink(message: string) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-export function ConciergeChat({ prefillQuery = '' }: ConciergeChatProps) {
+export function ConciergeChat({ prefillQuery = '', prefillYatra = '', prefillFrom = '' }: ConciergeChatProps) {
   const { messages, isStreaming, error, send, retry, clearError, addMessage } = useMeeraChat();
   const {
     concierge,
     setPlanningMode,
     setIntake,
     setConcierge,
-    resetConcierge,
   } = usePlannerStore();
   const { planningMode, intakeComplete, destination, fromCity, travelMonth } = concierge;
 
   const [draft, setDraft] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const prefillSentRef = useRef(false);
+  const yatraGreetedRef = useRef(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -56,6 +58,16 @@ export function ConciergeChat({ prefillQuery = '' }: ConciergeChatProps) {
       void send(prefillQuery);
     }
   }, [prefillQuery, send]);
+
+  useEffect(() => {
+    if (prefillYatra && !yatraGreetedRef.current && messages.length === 0) {
+      yatraGreetedRef.current = true;
+      const greeting = prefillFrom
+        ? `Namaste! I'll help you plan your ${prefillYatra} yatra from ${prefillFrom} 🙏 When are you thinking of travelling, and how many people will be joining?`
+        : `Namaste! I'd love to help you plan your ${prefillYatra} yatra 🙏 Where will you be travelling from, and when are you planning to go?`;
+      addMessage('assistant', greeting);
+    }
+  }, [prefillYatra, prefillFrom, addMessage, messages.length]);
 
   const handleSend = async (e?: FormEvent) => {
     e?.preventDefault();
@@ -122,21 +134,6 @@ export function ConciergeChat({ prefillQuery = '' }: ConciergeChatProps) {
           </p>
           <p className="text-[#F2C97E] text-xs font-sans">● Online now</p>
         </div>
-
-        {/* Plan a Yatra button */}
-        {!planningMode && (
-          <button
-            type="button"
-            onClick={() => {
-              resetConcierge();
-              setPlanningMode(true);
-            }}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-[#FBF5E8] text-xs font-semibold transition-opacity hover:opacity-90"
-            style={{ background: 'rgba(200, 90, 30, 0.75)', border: '1px solid rgba(242, 201, 126, 0.4)' }}
-          >
-            Plan a Yatra
-          </button>
-        )}
 
         <a
           href={buildWhatsAppLink(lastUserText)}

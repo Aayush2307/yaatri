@@ -68,6 +68,9 @@ type PlannerState = {
     currentView: ConciergeView;
     travelMode: 'flights' | 'trains' | 'road' | null;
     stayTier: 'basic' | 'better' | 'premium' | null;
+    // Prefill from homepage
+    prefillYatra: string | null;
+    prefillFrom: string | null;
   };
 
   // Concierge actions
@@ -83,6 +86,8 @@ type PlannerState = {
   selectHotel: (hotel: HotelOption) => void;
   markCategoryComplete: (cat: PlanCategory) => void;
   resetConcierge: () => void;
+  initiatePlanningSession: (yatra?: string, from?: string) => void;
+  clearSession: () => void;
 };
 
 const DEFAULT_CONCIERGE: PlannerState['concierge'] = {
@@ -103,6 +108,8 @@ const DEFAULT_CONCIERGE: PlannerState['concierge'] = {
   currentView: 'intake',
   travelMode: null,
   stayTier: null,
+  prefillYatra: null,
+  prefillFrom: null,
 };
 
 const initialState = {
@@ -188,6 +195,18 @@ export const usePlannerStore = create<PlannerState>()(
 
       resetConcierge: () =>
         set((state) => ({ concierge: { ...DEFAULT_CONCIERGE, planningMode: state.concierge.planningMode } })),
+
+      initiatePlanningSession: (yatra?: string, from?: string) =>
+        set(() => ({
+          concierge: {
+            ...DEFAULT_CONCIERGE,
+            prefillYatra: yatra ?? null,
+            prefillFrom: from ?? null,
+          },
+        })),
+
+      clearSession: () =>
+        set(() => ({ concierge: { ...DEFAULT_CONCIERGE } })),
     }),
     {
       name: 'yaatri-planner',
