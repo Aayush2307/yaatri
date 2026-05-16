@@ -4,59 +4,36 @@ import { searchFlights } from '@/services/flights';
 import { getTrainsBetweenStations } from '@/services/trains';
 import { searchHotels } from '@/services/hotels';
 
-type FlightParams = {
-  fromCity: string;
-  toCity: string;
-  date: string;
-  adults?: number;
-};
-
-type TrainParams = {
-  fromCity: string;
-  toCity: string;
-  date: string;
-};
-
-type HotelParams = {
-  city: string;
-  checkIn: string;
-  checkOut: string;
-  adults?: number;
-  tier?: 'basic' | 'better' | 'premium';
-};
+export const runtime = 'nodejs'; // FIXED: must be nodejs, not edge
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as
-    | { type: 'flights'; params: FlightParams }
-    | { type: 'trains'; params: TrainParams }
-    | { type: 'hotels'; params: HotelParams }
-    | { type: string; params: Record<string, unknown> };
+  let body: { type?: string; params?: Record<string, unknown> };
+  try { body = await req.json(); }
+  catch { return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 }); }
 
-  const { type, params } = body;
+  const { type, params = {} } = body;
+  const p = params as Record<string, unknown>;
 
   try {
     if (type === 'flights') {
-      const p = params as FlightParams;
-      const data = await searchFlights(p.fromCity, p.toCity, p.date, p.adults ?? 1);
-      return NextResponse.json({ ok: true, data });
+      if (!p.fromCity || !p.toCity || !p.date)
+        return NextResponse.json({ ok: false, error: 'flights needs fromCity, toCity, date' }, { status: 400 });
+      return NextResponse.json({ ok: true, data: await searchFlights(String(p.fromCity), String(p.toCity), String(p.date), Number(p.adults ?? 1)) });
     }
-
     if (type === 'trains') {
-      const p = params as TrainParams;
-      const data = await getTrainsBetweenStations(p.fromCity, p.toCity, p.date);
-      return NextResponse.json({ ok: true, data });
+      if (!p.fromCity || !p.toCity || !p.date)
+        return NextResponse.json({ ok: false, error: 'trains needs fromCity, toCity, date' }, { status: 400 });
+      return NextResponse.json({ ok: true, data: await getTrainsBetweenStations(String(p.fromCity), String(p.toCity), String(p.date)) });
     }
-
     if (type === 'hotels') {
-      const p = params as HotelParams;
-      const data = await searchHotels(p.city, p.checkIn, p.checkOut, p.adults ?? 2, p.tier);
-      return NextResponse.json({ ok: true, data });
+      if (!p.city || !p.checkIn || !p.checkOut)
+        return NextResponse.json({ ok: false, error: 'hotels needs city, checkIn, checkOut' }, { status: 400 });
+      return NextResponse.json({ ok: true, data: await searchHotels(String(p.city), String(p.checkIn), String(p.checkOut), Number(p.adults ?? 2), p.tier as 'basic' | 'better' | 'premium' | undefined) });
     }
-
-    return NextResponse.json({ ok: false, error: 'Unknown type' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: `Unknown type: ${type}` }, { status: 400 });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error(`[travel API] ${type} error:`, message);
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error(`[travel API] ${type}:`, msg);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }

@@ -69,57 +69,60 @@ export async function searchFlights(
     adults: String(adults),
     cabinClass: 'economy',
     currency: 'INR',
-    market: 'en-IN',
+    market: 'IN',
     countryCode: 'IN',
     sortBy: 'best',
+    limit: '10',
   });
 
-  const url = `https://${SS_HOST}/api/v2/flights/searchFlightsComplete?${params}`;
-  const res = await fetch(url, { headers: ssHeaders });
-  if (!res.ok) return makeDeeplinks(fromCity, toCity, date);
+  // FIXED: was searchFlightsComplete (deprecated) — now searchFlights
+  const url = `https://${SS_HOST}/api/v2/flights/searchFlights?${params}`;
+  try {
+    const res = await fetch(url, { headers: ssHeaders, cache: 'no-store' });
+    if (!res.ok) return makeDeeplinks(fromCity, toCity, date);
 
-  const data = (await res.json()) as {
-    data?: {
-      itineraries?: Array<{
-        id?: string;
-        legs?: Array<{
-          departure?: string;
-          arrival?: string;
-          durationInMinutes?: number;
-          stopCount?: number;
-          origin?: { displayCode?: string };
-          destination?: { displayCode?: string };
-          carriers?: { marketing?: Array<{ name?: string }> };
-          segments?: Array<{ flightNumber?: string }>;
+    const data = (await res.json()) as {
+      data?: {
+        itineraries?: Array<{
+          id?: string;
+          legs?: Array<{
+            departure?: string;
+            arrival?: string;
+            durationInMinutes?: number;
+            stopCount?: number;
+            origin?: { displayCode?: string };
+            destination?: { displayCode?: string };
+            carriers?: { marketing?: Array<{ name?: string }> };
+            segments?: Array<{ flightNumber?: string }>;
+          }>;
+          price?: { raw?: number };
         }>;
-        price?: { raw?: number; formatted?: string };
-      }>;
+      };
     };
-  };
 
-  const itineraries = data?.data?.itineraries || [];
-  if (itineraries.length === 0) return makeDeeplinks(fromCity, toCity, date);
+    const itineraries = data?.data?.itineraries ?? [];
+    if (!itineraries.length) return makeDeeplinks(fromCity, toCity, date);
 
-  return itineraries.slice(0, 4).map((item, idx): FlightOption => {
-    const leg = item.legs?.[0];
-    const rawPrice = item.price?.raw ?? Number(item.price?.formatted?.replace(/[^0-9]/g, '') || '0');
-    const carrier = leg?.carriers?.marketing?.[0];
-    const segment = leg?.segments?.[0];
-    return {
-      id: item.id || String(idx),
-      airline: carrier?.name || 'Airline',
-      flightNumber: segment?.flightNumber || '',
-      departure: (leg?.departure || '').substring(11, 16),
-      arrival: (leg?.arrival || '').substring(11, 16),
-      durationMinutes: leg?.durationInMinutes || 0,
-      priceINR: Number(rawPrice) || 0,
-      cabinClass: 'Economy',
-      stops: leg?.stopCount || 0,
-      bookingDeeplink: makeMmtLink(fromCity, toCity, date),
-      originCode: leg?.origin?.displayCode || '',
-      destCode: leg?.destination?.displayCode || '',
-    };
-  });
+    return itineraries.slice(0, 4).map((item, idx): FlightOption => {
+      const leg = item.legs?.[0];
+      const carrier = leg?.carriers?.marketing?.[0];
+      const segment = leg?.segments?.[0];
+      return {
+        id: item.id ?? String(idx),
+        airline: carrier?.name ?? 'Airline',
+        flightNumber: segment?.flightNumber ?? '',
+        departure: (leg?.departure ?? '').substring(11, 16),
+        arrival: (leg?.arrival ?? '').substring(11, 16),
+        durationMinutes: leg?.durationInMinutes ?? 0,
+        priceINR: Number(item.price?.raw ?? 0),
+        cabinClass: 'Economy',
+        stops: leg?.stopCount ?? 0,
+        bookingDeeplink: makeMmtLink(fromCity, toCity, date),
+        originCode: leg?.origin?.displayCode ?? '',
+        destCode: leg?.destination?.displayCode ?? '',
+      };
+    });
+  } catch { return makeDeeplinks(fromCity, toCity, date); }
 }
 
 function makeMmtLink(from: string, to: string, date: string): string {

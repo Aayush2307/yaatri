@@ -24,7 +24,7 @@ export interface HotelOption {
 }
 
 type DestResult = {
-  data?: Array<{ dest_id?: string | number; dest_type?: string }>;
+  data?: Array<{ dest_id?: string | number; search_type?: string; dest_type?: string }>;
 };
 
 type HotelResult = {
@@ -39,19 +39,26 @@ type HotelResult = {
         priceBreakdown?: { grossPrice?: { value?: number } };
         photoUrls?: string[];
         wishlistName?: string;
+        url?: string;
       };
     }>;
   };
 };
 
 // Resolve city name to Booking.com dest_id
-async function resolveCity(city: string): Promise<{ dest_id: string; dest_type: string } | null> {
-  const url = `https://${BOOKING_HOST}/api/v1/hotels/searchDestination?query=${encodeURIComponent(city)}&languagecode=en-us`;
-  const res = await fetch(url, { headers });
-  if (!res.ok) return null;
-  const data = (await res.json()) as DestResult;
-  const first = data?.data?.[0];
-  return first ? { dest_id: String(first.dest_id), dest_type: first.dest_type || 'city' } : null;
+async function resolveCity(city: string): Promise<{ dest_id: string; search_type: string } | null> {
+  try {
+    const res = await fetch(
+      `https://${BOOKING_HOST}/api/v1/hotels/searchDestination?query=${encodeURIComponent(city)}&languagecode=en-us`,
+      { headers, cache: 'no-store' },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as DestResult;
+    const first = data?.data?.[0];
+    if (!first) return null;
+    // FIXED: use first.search_type (already uppercase "CITY") not first.dest_type
+    return { dest_id: String(first.dest_id), search_type: first.search_type ?? 'CITY' };
+  } catch { return null; }
 }
 
 function priceTier(priceINR: number): 'basic' | 'better' | 'premium' {
@@ -72,7 +79,7 @@ export async function searchHotels(
 
   const params = new URLSearchParams({
     dest_id: dest.dest_id,
-    search_type: dest.dest_type.toUpperCase(),
+    search_type: dest.search_type, // FIXED: uppercase CITY from API
     arrival_date: checkIn,
     departure_date: checkOut,
     adults: String(adults),
@@ -80,31 +87,37 @@ export async function searchHotels(
     page_number: '1',
     languagecode: 'en-us',
     currency_code: 'INR',
+    units: 'metric',
   });
 
-  const url = `https://${BOOKING_HOST}/api/v1/hotels/searchHotels?${params}`;
-  const res = await fetch(url, { headers });
-  if (!res.ok) return [];
+  try {
+    const res = await fetch(`https://${BOOKING_HOST}/api/v1/hotels/searchHotels?${params}`, { headers, cache: 'no-store' });
+    if (!res.ok) return [];
 
-  const data = (await res.json()) as HotelResult;
-  const hotels = data?.data?.hotels || [];
+    const data = (await res.json()) as HotelResult;
+    const hotels = data?.data?.hotels ?? [];
 
-  const mapped: HotelOption[] = hotels.map((h): HotelOption => {
-    const price = Math.round(h.property?.priceBreakdown?.grossPrice?.value || 0);
-    return {
-      hotelId: h.hotel_id || 0,
-      name: h.property?.name || 'Hotel',
-      stars: h.property?.propertyClass || 0,
-      reviewScore: h.property?.reviewScore || 0,
-      reviewCount: h.property?.reviewCount || 0,
-      pricePerNightINR: price,
-      photoUrl: h.property?.photoUrls?.[0] || null,
-      tier: priceTier(price),
-      bookingUrl: `https://www.booking.com/hotel/in/${h.hotel_id}.html`,
-      highlights: h.property?.wishlistName || '',
-    };
-  });
+    const mapped: HotelOption[] = hotels.map((h): HotelOption => {
+      const price = Math.round(h.property?.priceBreakdown?.grossPrice?.value ?? 0);
+      // FIXED: use property.url if available, else construct search deeplink
+      const bookingUrl = h.property?.url
+        ? `https://www.booking.com${h.property.url}`
+        : `https://www.booking.com/searchresults/in/${encodeURIComponent(city.toLowerCase())}.html?dest_id=${dest.dest_id}&dest_type=city&checkin=${checkIn}&checkout=${checkOut}&group_adults=${adults}`;
+      return {
+        hotelId: h.hotel_id ?? 0,
+        name: h.property?.name ?? 'Hotel',
+        stars: h.property?.propertyClass ?? 0,
+        reviewScore: h.property?.reviewScore ?? 0,
+        reviewCount: h.property?.reviewCount ?? 0,
+        pricePerNightINR: price,
+        photoUrl: h.property?.photoUrls?.[0] ?? null,
+        tier: priceTier(price),
+        bookingUrl,
+        highlights: h.property?.wishlistName ?? '',
+      };
+    });
 
-  const filtered = tier ? mapped.filter((h) => h.tier === tier) : mapped;
-  return filtered.slice(0, 3);
+    const filtered = tier ? mapped.filter((h) => h.tier === tier) : mapped;
+    return filtered.slice(0, 3);
+  } catch { return []; }
 }

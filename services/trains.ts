@@ -45,53 +45,65 @@ type RawTrain = {
   trainName?: string;
   train_name?: string;
   departureTime?: string;
-  from_time?: string;
+  fromTime?: string;
   arrivalTime?: string;
-  to_time?: string;
+  toTime?: string;
   duration?: string;
   distance?: number;
+  distanceKm?: number;
+  // FIXED: classType is the correct key on this API
+  classType?: string[];
   classes?: string[];
-  available_classes?: string[];
-  runsOn?: Record<string, boolean | string | number>;
+  runsOn?: Record<string, boolean | string>;
 };
+
+// FIXED: normalise date — IRCTC requires YYYYMMDD
+function toIrctcDate(date: string) { return date.includes('-') ? date.replace(/-/g, '') : date; }
 
 export async function getTrainsBetweenStations(
   fromCity: string,
   toCity: string,
-  date: string, // YYYYMMDD format e.g. "20260315"
+  date: string, // accepts YYYY-MM-DD or YYYYMMDD
 ): Promise<TrainOption[]> {
-  const from = STATION_CODES[fromCity] || fromCity.toUpperCase();
-  const to = STATION_CODES[toCity] || toCity.toUpperCase();
+  const from = STATION_CODES[fromCity] ?? fromCity.toUpperCase();
+  const to = STATION_CODES[toCity] ?? toCity.toUpperCase();
+  const d = toIrctcDate(date); // FIXED: always send YYYYMMDD
 
-  const url = `https://${IRCTC_HOST}/getTrainBetweenStations?fromStationCode=${from}&toStationCode=${to}&dateOfJourney=${date}`;
-  const res = await fetch(url, { headers });
-  if (!res.ok) return [];
+  try {
+    const res = await fetch(
+      `https://${IRCTC_HOST}/getTrainBetweenStations?fromStationCode=${from}&toStationCode=${to}&dateOfJourney=${d}`,
+      { headers, cache: 'no-store' },
+    );
+    if (!res.ok) return [];
 
-  const data = (await res.json()) as { data?: RawTrain[] } | RawTrain[];
-  const trains: RawTrain[] = Array.isArray(data)
-    ? data
-    : (Array.isArray((data as { data?: RawTrain[] }).data) ? (data as { data: RawTrain[] }).data : []);
+    const data = (await res.json()) as Record<string, unknown>;
+    // FIXED: actual response shape is { success: true, body: [...] }
+    const trains: RawTrain[] = Array.isArray(data?.body) ? (data.body as RawTrain[])
+      : Array.isArray(data?.data) ? (data.data as RawTrain[])
+      : Array.isArray(data) ? (data as RawTrain[])
+      : [];
 
-  return trains.slice(0, 5).map((t): TrainOption => {
-    const classes: string[] = t.classes || t.available_classes || ['SL', '3A'];
-    const km: number = t.distance || 700;
-    return {
-      trainNumber: String(t.trainNo || t.train_number || ''),
-      trainName: t.trainName || t.train_name || 'Express',
-      departure: t.departureTime || t.from_time || '',
-      arrival: t.arrivalTime || t.to_time || '',
-      durationHours: t.duration || '',
-      distanceKm: km,
-      availableClasses: classes,
-      approxFares: Object.fromEntries(classes.map((c) => [c, calcFare(c, km)])),
-      runsOn: t.runsOn
-        ? Object.entries(t.runsOn)
-            .filter(([, v]) => Boolean(v))
-            .map(([k]) => k)
-        : [],
-      irctcBookingLink: `https://www.irctc.co.in/nget/train-search?fromStation=${from}&toStation=${to}&jdate=${date}&class=3A`,
-    };
-  });
+    const DAY_MAP: Record<string, string> = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
+
+    return trains.slice(0, 5).map((t): TrainOption => {
+      const classes: string[] = t.classType ?? t.classes ?? ['SL', '3A'];
+      const km: number = t.distance ?? t.distanceKm ?? 700;
+      return {
+        trainNumber: String(t.trainNo ?? t.train_number ?? ''),
+        trainName: t.trainName ?? t.train_name ?? 'Express',
+        departure: t.departureTime ?? t.fromTime ?? '',
+        arrival: t.arrivalTime ?? t.toTime ?? '',
+        durationHours: t.duration ?? '',
+        distanceKm: km,
+        availableClasses: classes,
+        approxFares: Object.fromEntries(classes.map((c) => [c, calcFare(c, km)])),
+        runsOn: t.runsOn
+          ? Object.entries(t.runsOn).filter(([, v]) => v === true || v === 'Y').map(([k]) => DAY_MAP[k.toLowerCase()] ?? k)
+          : [],
+        irctcBookingLink: `https://www.irctc.co.in/nget/train-search?fromStation=${from}&toStation=${to}&jdate=${d}&class=3A`,
+      };
+    });
+  } catch { return []; }
 }
 
 export async function checkSeatAvailability(
@@ -101,9 +113,20 @@ export async function checkSeatAvailability(
   cls: string,
   date: string,
 ): Promise<string> {
-  const url = `https://${IRCTC_HOST}/checkSeatAvailability?trainNo=${trainNo}&fromStationCode=${from}&toStationCode=${to}&classType=${cls}&quota=GN&date=${date}`;
-  const res = await fetch(url, { headers });
-  if (!res.ok) return 'Check on IRCTC';
-  const data = (await res.json()) as { data?: { availability?: string }; availability?: string };
-  return data?.data?.availability || data?.availability || 'Check on IRCTC';
+  const d = toIrctcDate(date);
+  const f = STATION_CODES[from] ?? from.toUpperCase();
+  const t = STATION_CODES[to] ?? to.toUpperCase();
+  try {
+    const res = await fetch(
+      `https://${IRCTC_HOST}/checkSeatAvailability?trainNo=${trainNo}&fromStationCode=${f}&toStationCode=${t}&classType=${cls}&quota=GN&date=${d}`,
+      { headers, cache: 'no-store' },
+    );
+    if (!res.ok) return 'Check on IRCTC';
+    const data = (await res.json()) as Record<string, unknown>;
+    return String(
+      (data?.body as Record<string, unknown>)?.availability
+      ?? (data?.data as Record<string, unknown>)?.availability
+      ?? 'Check on IRCTC'
+    );
+  } catch { return 'Check on IRCTC'; }
 }
