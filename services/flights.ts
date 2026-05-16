@@ -26,24 +26,31 @@ export interface FlightOption {
 }
 
 // Step 1: Resolve city name to Sky Scrapper's skyId + entityId
+// Response shape: { navigation: { relevantFlightParams: { skyId, entityId } } }
 async function resolveAirport(cityName: string): Promise<{ skyId: string; entityId: string } | null> {
-  const url = `https://${SS_HOST}/api/v1/flights/searchAirport?query=${encodeURIComponent(cityName)}&locale=en-US`;
-  const res = await fetch(url, { headers: ssHeaders });
-  if (!res.ok) return null;
-  const data = (await res.json()) as {
-    data?: Array<{
-      skyId?: string;
-      entityId?: string;
-      presentation?: { skyId?: string };
-      navigation?: { entityId?: string };
-    }>;
-  };
-  const first = data?.data?.[0];
-  if (!first) return null;
-  return {
-    skyId: first.skyId || first.presentation?.skyId || first.entityId || '',
-    entityId: first.entityId || first.navigation?.entityId || '',
-  };
+  try {
+    const url = `https://${SS_HOST}/api/v1/flights/searchAirport?query=${encodeURIComponent(cityName)}&locale=en-US`;
+    const res = await fetch(url, { headers: ssHeaders, cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      data?: Array<{
+        skyId?: string;
+        entityId?: string;
+        navigation?: {
+          entityId?: string;
+          relevantFlightParams?: { skyId?: string; entityId?: string };
+        };
+      }>;
+    };
+    const first = data?.data?.[0];
+    if (!first) return null;
+    // skyId and entityId are nested under navigation.relevantFlightParams
+    const fp = first.navigation?.relevantFlightParams;
+    return {
+      skyId: fp?.skyId ?? first.skyId ?? '',
+      entityId: fp?.entityId ?? first.navigation?.entityId ?? first.entityId ?? '',
+    };
+  } catch { return null; }
 }
 
 // Step 2: Search flights between two cities on a date
