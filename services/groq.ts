@@ -1,14 +1,41 @@
 import Groq from 'groq-sdk';
 import { createGroq } from '@ai-sdk/groq';
 
-// Direct SDK client — used for intent extraction (non-streaming, JSON mode)
-export const groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY! });
-
-// Vercel AI SDK provider — used for streaming chat responses
-export const groqProvider = createGroq({ apiKey: process.env.GROQ_API_KEY! });
-
 export const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 export const GROQ_FAST_MODEL = process.env.GROQ_FAST_MODEL || 'llama-3.1-8b-instant';
+
+// Lazy singletons — instantiated on first call, not at module load time.
+// This prevents build-time crashes when GROQ_API_KEY is absent from the
+// build environment (it's only injected at runtime on Vercel).
+let _groqClient: Groq | null = null;
+let _groqProvider: ReturnType<typeof createGroq> | null = null;
+
+export function getGroqClient(): Groq {
+  if (!_groqClient) {
+    _groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY! });
+  }
+  return _groqClient;
+}
+
+export function getGroqProvider(): ReturnType<typeof createGroq> {
+  if (!_groqProvider) {
+    _groqProvider = createGroq({ apiKey: process.env.GROQ_API_KEY! });
+  }
+  return _groqProvider;
+}
+
+// Back-compat aliases so existing imports don't need changing
+export const groqClient = new Proxy({} as Groq, {
+  get(_: Groq, prop: string | symbol) {
+    return (getGroqClient() as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});
+
+export const groqProvider = new Proxy({} as ReturnType<typeof createGroq>, {
+  get(_: ReturnType<typeof createGroq>, prop: string | symbol) {
+    return (getGroqProvider() as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});
 
 export interface TravelIntent {
   isPlanningIntent: boolean;
@@ -20,7 +47,7 @@ export interface TravelIntent {
 
 export async function extractTravelIntent(userMessage: string): Promise<TravelIntent> {
   try {
-    const res = await groqClient.chat.completions.create({
+    const res = await getGroqClient().chat.completions.create({
       model: GROQ_FAST_MODEL,
       temperature: 0,
       response_format: { type: 'json_object' },
