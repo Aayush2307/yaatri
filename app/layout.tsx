@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, DM_Sans, EB_Garamond, Noto_Sans_Devanagari, Nunito_Sans } from 'next/font/google';
+import { Cinzel, Cormorant_Garamond, Crimson_Pro, DM_Sans, EB_Garamond, Noto_Sans_Devanagari, Nunito_Sans } from 'next/font/google';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -37,6 +37,22 @@ const nunitoSans = Nunito_Sans({
   display: 'swap',
 });
 
+// Meera Cinematic UI fonts
+const cinzel = Cinzel({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-cinzel',
+  display: 'swap',
+});
+
+const crimsonPro = Crimson_Pro({
+  subsets: ['latin'],
+  weight: ['300', '400'],
+  style: ['normal', 'italic'],
+  variable: '--font-crimson-pro',
+  display: 'swap',
+});
+
 
 export const metadata: Metadata = {
   title: 'Yaatri',
@@ -46,7 +62,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} ${cormorant.variable} ${notoDevanagari.variable} ${ebGaramond.variable} ${nunitoSans.variable} font-sans`}>
+      <body className={`${dmSans.variable} ${cormorant.variable} ${notoDevanagari.variable} ${ebGaramond.variable} ${nunitoSans.variable} ${cinzel.variable} ${crimsonPro.variable} font-sans`}>
         {children}
       </body>
     </html>

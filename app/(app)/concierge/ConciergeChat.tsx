@@ -9,10 +9,18 @@ import {
 } from '@/store/meeraStore';
 import { MeeraItineraryCard } from '@/components/concierge/MeeraItineraryCard';
 import MeeraAvatar from '@/components/concierge/MeeraAvatar';
-import MandalaBackground from '@/components/concierge/MandalaBackground';
 import OfferingChips from '@/components/concierge/OfferingChips';
 import { M } from '@/components/concierge/tokens';
 import type { BudgetTier, GeneratedItinerary } from '@/types/yatra';
+// ── Meera Cinematic UI ────────────────────────────────────────────────────────
+import { CinematicBackground } from '@/components/meera-ui/CinematicBackground';
+import { DiyaParticles } from '@/components/meera-ui/DiyaParticles';
+import { MeeraHeader } from '@/components/meera-ui/MeeraHeader';
+import { SankalpGate } from '@/components/meera-ui/SankalpGate';
+import { MeeraMessage, UserMessage } from '@/components/meera-ui/MeeraMessage';
+import { MeeraInput } from '@/components/meera-ui/MeeraInput';
+import { SacredJourneyWrapper } from '@/components/meera-ui/SacredJourneyWrapper';
+import { useMeera, type Intention } from '@/components/meera-ui/MeeraContext';
 
 // ─── Destination name → slug mapping ─────────────────────────────────────────
 
@@ -178,6 +186,15 @@ export function ConciergeChat() {
   const generationCalledRef = useRef(false);
   const saveBriefCalledRef = useRef(false);
 
+  // ── Sankalp (intention gate) ─────────────────────────────────────────────────
+  const { sankalpComplete, setSankalpComplete } = useMeera();
+  const [sankalpOpeningMsg, setSankalpOpeningMsg] = useState<string | null>(null);
+
+  function handleSankalpComplete(_intention: Intention, openingMessage: string) {
+    setSankalpOpeningMsg(openingMessage);
+    setSankalpComplete(true);
+  }
+
   useEffect(() => {
     init();
     generationCalledRef.current = false;
@@ -301,6 +318,8 @@ export function ConciergeChat() {
   const handleReset = () => {
     generationCalledRef.current = false;
     saveBriefCalledRef.current = false;
+    setSankalpOpeningMsg(null);
+    setSankalpComplete(false);
     reset();
   };
 
@@ -321,226 +340,133 @@ export function ConciergeChat() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div
-      style={{
-        minHeight: '100svh',
-        background: M.cream,
-        display: 'flex',
-        justifyContent: 'center',
-      }}
-    >
+    /* ── Cinematic full-viewport shell ───────────────────────────────────────── */
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: '#0D0804', display: 'flex', justifyContent: 'center' }}>
+      {/* Layer 0-2: canvas bg + grain + vignette */}
+      <CinematicBackground />
+      {/* Layer 3: diya particles */}
+      <DiyaParticles />
+
+      {/* Layer 10+: chat content */}
       <div
         style={{
           width: '100%',
           maxWidth: 480,
           display: 'flex',
           flexDirection: 'column',
-          height: '100svh',
+          height: '100%',
           position: 'relative',
+          zIndex: 10,
         }}
       >
-        {/* Mandala background */}
-        <MandalaBackground />
+        {/* ── Meera Header ──────────────────────────────────────────────── */}
+        <MeeraHeader
+          statusText={step === 'GENERATING' ? 'crafting your yatra…' : 'present with you'}
+          onReset={handleReset}
+          showReset={sankalpComplete && step !== 'GREETING'}
+        />
 
-        {/* ── Header ──────────────────────────────────────────────────────── */}
-        <header
-          style={{
-            background: M.terracotta,
-            padding: '12px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            flexShrink: 0,
-            zIndex: 10,
-            position: 'relative',
-          }}
-        >
-          <MeeraAvatar size={40} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <span
+        {/* ── SankalpGate (shows before any chat) ───────────────────────── */}
+        {!sankalpComplete ? (
+          <SankalpGate onComplete={handleSankalpComplete} />
+        ) : (
+          <>
+            {/* ── Chat scroll area ────────────────────────────────────────── */}
+            <div
               style={{
-                fontFamily: 'var(--font-cormorant), Georgia, serif',
-                fontSize: 20,
-                fontWeight: 600,
-                color: M.parchment,
-                lineHeight: 1.1,
-              }}
-            >
-              Meera
-            </span>
-            <span
-              style={{
-                fontSize: 10,
-                letterSpacing: '0.1em',
-                color: M.terracottaMuted,
-                textTransform: 'uppercase',
-              }}
-            >
-              Your Yatra Guide
-            </span>
-          </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 10, color: `${M.parchment}88` }}>Online</span>
-            {step !== 'GREETING' && (
-              <button
-                onClick={handleReset}
-                title="Start over"
-                aria-label="Start over"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: `${M.parchment}88`,
-                  cursor: 'pointer',
-                  fontSize: 16,
-                  padding: '4px',
-                }}
-              >
-                ↺
-              </button>
-            )}
-          </div>
-        </header>
-
-        {/* ── Chat scroll area ─────────────────────────────────────────────── */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '16px 16px 8px',
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          {/* Messages */}
-          {messages.map((msg) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: msg.itinerary ? 0.35 : 0.22, ease: 'easeOut' }}
-              style={{
-                marginBottom: 12,
+                flex: 1,
+                overflowY: 'auto',
+                padding: '16px 16px 8px',
                 display: 'flex',
-                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                gap: 10,
-                alignItems: 'flex-start',
+                flexDirection: 'column',
+                position: 'relative',
+                zIndex: 1,
               }}
             >
-              {msg.role === 'meera' ? (
-                <>
-                  <MeeraAvatar size={32} />
-                  <div style={{ maxWidth: '82%', display: 'flex', flexDirection: 'column', gap: 0 }}>
-                    {msg.itinerary ? (
-                      <>
-                        <MeeraItineraryCard
-                          itinerary={msg.itinerary}
-                          fromCity={brief.fromCity}
-                          travelMonth={brief.travelMonth}
-                          groupSize={brief.groupSize}
-                          budgetTier={brief.budgetTier}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => saveItineraryAndNavigate(msg.itinerary!, brief.fromCity)}
-                          style={{
-                            marginTop: 8,
-                            padding: '10px 16px',
-                            background: '#C85A1E',
-                            color: '#F5EDD9',
-                            border: 'none',
-                            borderRadius: '12px',
-                            fontSize: '13px',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            width: '100%',
-                          }}
-                        >
-                          View Full Itinerary →
-                        </button>
-                      </>
-                    ) : (
-                      <div
-                        style={{
-                          padding: '10px 14px',
-                          background: M.parchment,
-                          border: `1px solid ${M.divider}`,
-                          borderRadius: '0 12px 12px 12px',
-                          borderLeft: `3px solid ${M.terracotta}`,
-                        }}
-                      >
-                        {msg.isGreeting ? (
-                          <>
-                            <p
-                              style={{
-                                fontFamily: 'var(--font-cormorant), Georgia, serif',
-                                fontSize: 17,
-                                fontStyle: 'italic',
-                                color: M.terracotta,
-                                margin: '0 0 4px',
-                                lineHeight: 1.2,
-                              }}
-                            >
-                              नमस्ते 🪔
-                            </p>
-                            <p
-                              style={{
-                                fontSize: 13,
-                                color: M.warmBrown,
-                                lineHeight: 1.6,
-                                margin: 0,
-                                whiteSpace: 'pre-line',
-                              }}
-                            >
-                              {msg.text}
-                            </p>
-                          </>
-                        ) : (
-                          <p
-                            style={{
-                              fontSize: 13,
-                              color: M.warmBrown,
-                              lineHeight: 1.6,
-                              margin: 0,
-                              whiteSpace: 'pre-line',
-                            }}
-                          >
-                            {msg.text}
-                          </p>
-                        )}
-                      </div>
-                    )}
+              {/* Sankalp opening message */}
+              {sankalpOpeningMsg && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, ease: 'easeOut' }}
+                  style={{ marginBottom: 20 }}
+                >
+                  <MeeraMessage>{sankalpOpeningMsg}</MeeraMessage>
+                </motion.div>
+              )}
 
-                    {/* Offering chips — only for active chip message */}
-                    {msg.offeringChips && msg.id === activeChipMessageId && (
-                      <OfferingChips
-                        chips={msg.offeringChips}
-                        onSelect={(chip) => {
-                          if (chip.includes('book')) generationCalledRef.current = false;
-                          selectOfferingChip(chip);
-                        }}
-                      />
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div
+              {/* Messages */}
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: msg.itinerary ? 0.35 : 0.22, ease: 'easeOut' }}
                   style={{
-                    padding: '8px 14px',
-                    background: M.terracotta,
-                    color: M.parchment,
-                    borderRadius: '12px 12px 0 12px',
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    maxWidth: '72%',
+                    marginBottom: 16,
+                    display: 'flex',
+                    justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                    alignItems: 'flex-start',
                   }}
                 >
-                  {msg.text}
-                </div>
-              )}
-            </motion.div>
-          ))}
+                  {msg.role === 'meera' ? (
+                    <div style={{ maxWidth: '90%', display: 'flex', flexDirection: 'column', gap: 0 }}>
+                      {msg.itinerary ? (
+                        <SacredJourneyWrapper destination={msg.itinerary.destination}>
+                          <MeeraItineraryCard
+                            itinerary={msg.itinerary}
+                            fromCity={brief.fromCity}
+                            travelMonth={brief.travelMonth}
+                            groupSize={brief.groupSize}
+                            budgetTier={brief.budgetTier}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => saveItineraryAndNavigate(msg.itinerary!, brief.fromCity)}
+                            style={{
+                              marginTop: 12,
+                              padding: '10px 16px',
+                              background: 'var(--meera-saffron)',
+                              color: 'var(--meera-pale-gold)',
+                              border: 'none',
+                              borderRadius: 3,
+                              fontSize: 12,
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                              width: '100%',
+                              fontFamily: 'var(--meera-font-label)',
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            ✦ View Full Itinerary →
+                          </button>
+                        </SacredJourneyWrapper>
+                      ) : (
+                        <MeeraMessage>
+                          {msg.isGreeting && (
+                            <span style={{ display: 'block', fontSize: 18, marginBottom: 4 }}>नमस्ते 🪔</span>
+                          )}
+                          <span style={{ whiteSpace: 'pre-line' }}>{msg.text}</span>
+                        </MeeraMessage>
+                      )}
+
+                      {/* Offering chips — only for active chip message */}
+                      {msg.offeringChips && msg.id === activeChipMessageId && (
+                        <OfferingChips
+                          chips={msg.offeringChips}
+                          onSelect={(chip) => {
+                            if (chip.includes('book')) generationCalledRef.current = false;
+                            selectOfferingChip(chip);
+                          }}
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    <UserMessage>{msg.text}</UserMessage>
+                  )}
+                </motion.div>
+              ))}
 
           {/* ── Destination grid (GREETING) ────────────────────────────────── */}
           <AnimatePresence>
@@ -837,71 +763,24 @@ export function ConciergeChat() {
             )}
           </AnimatePresence>
 
-          <div ref={bottomRef} />
-        </div>
+              <div ref={bottomRef} />
+            </div>{/* end chat scroll area */}
 
-        {/* ── Bottom text input ────────────────────────────────────────────── */}
-        {showTextInput && (
-          <div
-            style={{
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 14px',
-              background: M.parchment,
-              borderTop: `1px solid ${M.divider}`,
-              position: 'relative',
-              zIndex: 10,
-            }}
-          >
-            <input
-              id="meera-text-input"
-              type="text"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder={inputPlaceholderMap[step] ?? 'Type your answer…'}
-              style={{
-                flex: 1,
-                background: M.cream,
-                border: `1px solid ${M.divider}`,
-                borderRadius: 20,
-                padding: '9px 16px',
-                fontSize: 13,
-                color: M.deepBrown,
-                outline: 'none',
-                fontFamily: 'inherit',
-              }}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!draft.trim()}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                border: 'none',
-                background: draft.trim() ? M.terracotta : M.creamDark,
-                color: draft.trim() ? M.parchment : M.mutedText,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: draft.trim() ? 'pointer' : 'default',
-                flexShrink: 0,
-              }}
-              aria-label="Send"
-            >
-              <SendIcon />
-            </button>
-          </div>
-        )}
-      </div>
+            {/* ── Styled text input ─────────────────────────────────────────── */}
+            {showTextInput && (
+              <div style={{ flexShrink: 0, padding: '0 16px', position: 'relative', zIndex: 10 }}>
+                <MeeraInput
+                  value={draft}
+                  onChange={setDraft}
+                  onSubmit={handleSend}
+                  disabled={step === 'GENERATING'}
+                  placeholder={inputPlaceholderMap[step] ?? 'Share what is in your heart…'}
+                />
+              </div>
+            )}
+          </>
+        )}{/* end sankalpComplete block */}
+      </div>{/* end maxWidth container */}
     </div>
   );
 }

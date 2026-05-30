@@ -277,3 +277,48 @@ body {
 }
 
 /* ═══ END Phase 4 ═══ */
+
+/* ═══ YAATRI — Meera Cinematic UI Design System ═══ */
+
+:root {
+  --meera-ash: #1A1410;
+  --meera-smoke: #2D2420;
+  --meera-saffron: #E8843A;
+  --meera-deep-saffron: #C4611E;
+  --meera-gold: #D4A853;
+  --meera-pale-gold: #F5E8C8;
+  --meera-ember: #8B2500;
+  --meera-text-primary: #F5E8C8;
+  --meera-text-secondary: rgba(245, 232, 200, 0.65);
+  --meera-text-dim: rgba(245, 232, 200, 0.35);
+  --meera-border: rgba(212, 168, 83, 0.18);
+  --meera-border-active: rgba(212, 168, 83, 0.5);
+  --meera-surface: rgba(26, 20, 16, 0.75);
+  --meera-surface-hover: rgba(232, 132, 58, 0.1);
+  --meera-font-display: var(--font-cormorant), 'Cormorant Garamond', Georgia, serif;
+  --meera-font-label: var(--font-cinzel), 'Cinzel', serif;
+  --meera-font-body: var(--font-crimson-pro), 'Crimson Pro', Georgia, serif;
+}
+
+@keyframes meera-float-up {
+  0%   { opacity: 0; transform: translateY(0) translateX(0) scale(1); }
+  20%  { opacity: 0.6; }
+  80%  { opacity: 0.2; }
+  100% { opacity: 0; transform: translateY(-60vh) translateX(var(--drift, 0px)) scale(0); }
+}
+
+@keyframes meera-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes meera-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes meera-pulse-dot {
+  0%, 100% { opacity: 0.4; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1.2); }
+}
+
+/* ═══ END Meera Cinematic UI ═══ */
