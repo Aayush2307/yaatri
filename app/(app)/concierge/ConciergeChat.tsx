@@ -7,12 +7,68 @@ import {
   TOP_DESTINATIONS,
   NEEDS_CHIPS,
 } from '@/store/meeraStore';
-import { ItineraryCard } from '@/components/concierge/ItineraryCard';
+import { MeeraItineraryCard } from '@/components/concierge/MeeraItineraryCard';
 import MeeraAvatar from '@/components/concierge/MeeraAvatar';
 import MandalaBackground from '@/components/concierge/MandalaBackground';
 import OfferingChips from '@/components/concierge/OfferingChips';
 import { M } from '@/components/concierge/tokens';
 import type { BudgetTier, GeneratedItinerary } from '@/types/yatra';
+
+// ─── Destination name → slug mapping ─────────────────────────────────────────
+
+function toDestinationSlug(destination: string): string {
+  const lower = destination.toLowerCase();
+  if (lower.includes('char dham') || lower.includes('char-dham')) return 'char_dham';
+  if (lower.includes('kedarnath')) return 'kedarnath';
+  if (lower.includes('badrinath')) return 'badrinath';
+  if (lower.includes('varanasi') || lower.includes('kashi')) return 'varanasi';
+  if (lower.includes('tirupati')) return 'tirupati';
+  if (lower.includes('shirdi')) return 'shirdi';
+  if (lower.includes('vrindavan')) return 'vrindavan';
+  if (lower.includes('mathura')) return 'mathura';
+  if (lower.includes('puri') || lower.includes('jagannath')) return 'puri';
+  if (lower.includes('amritsar') || lower.includes('golden temple')) return 'amritsar';
+  if (lower.includes('sabarimala') || lower.includes('ayyappa')) return 'sabarimala';
+  if (lower.includes('amarnath')) return 'amarnath';
+  if (lower.includes('vaishno') || lower.includes('vaishnodevi')) return 'vaishnodevi';
+  if (lower.includes('rameshwaram') || lower.includes('rameswaram')) return 'rameshwaram';
+  return lower.replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+}
+
+function saveItineraryAndNavigate(itinerary: GeneratedItinerary, fromCity?: string) {
+  const id = Date.now().toString();
+  const slug = toDestinationSlug(itinerary.destination);
+  const durationMatch = itinerary.duration.match(/(\d+)\s*Days?.*?(\d+)\s*Nights?/i);
+  const totalDays = durationMatch ? parseInt(durationMatch[1], 10) : itinerary.days.length;
+  const totalNights = durationMatch ? parseInt(durationMatch[2], 10) : Math.max(0, totalDays - 1);
+
+  const stub = {
+    title: itinerary.title,
+    destinationSlug: slug,
+    totalDays,
+    totalNights,
+    days: itinerary.days.map((d, i) => {
+      const dayNumMatch = d.day.match(/\d+/);
+      return {
+        dayNumber: dayNumMatch ? parseInt(dayNumMatch[0], 10) : i + 1,
+        title: d.title,
+        description: d.description,
+        highlights: d.highlights,
+        location: d.stay,
+      };
+    }),
+  };
+
+  // Bridge fromCity to itinerary page (reads yaatri_plan_draft.startingCity)
+  try {
+    const raw = localStorage.getItem('yaatri_plan_draft');
+    const draft = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+    localStorage.setItem('yaatri_plan_draft', JSON.stringify({ ...draft, startingCity: fromCity ?? '' }));
+  } catch { /* ignore */ }
+
+  localStorage.setItem(`yaatri_itinerary_${id}`, JSON.stringify(stub));
+  window.location.href = `/itinerary/${id}`;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -377,12 +433,33 @@ export function ConciergeChat() {
                   <MeeraAvatar size={32} />
                   <div style={{ maxWidth: '82%', display: 'flex', flexDirection: 'column', gap: 0 }}>
                     {msg.itinerary ? (
-                      <ItineraryCard
-                        itinerary={msg.itinerary}
-                        fromCity={brief.fromCity}
-                        travelMonth={brief.travelMonth}
-                        groupSize={brief.groupSize}
-                      />
+                      <>
+                        <MeeraItineraryCard
+                          itinerary={msg.itinerary}
+                          fromCity={brief.fromCity}
+                          travelMonth={brief.travelMonth}
+                          groupSize={brief.groupSize}
+                          budgetTier={brief.budgetTier}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => saveItineraryAndNavigate(msg.itinerary!, brief.fromCity)}
+                          style={{
+                            marginTop: 8,
+                            padding: '10px 16px',
+                            background: '#C85A1E',
+                            color: '#F5EDD9',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            width: '100%',
+                          }}
+                        >
+                          View Full Itinerary →
+                        </button>
+                      </>
                     ) : (
                       <div
                         style={{
