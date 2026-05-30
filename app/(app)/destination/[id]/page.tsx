@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { circuits } from '@/lib/mockData';
 import BackButton from '@/components/BackButton';
+import { ItineraryEnhancement } from '@/components/itinerary/ItineraryEnhancement';
 
 export default function DestinationPage() {
   const params = useParams<{ id: string }>();
@@ -26,6 +27,8 @@ export default function DestinationPage() {
             <li className="flex items-center justify-between"><span>Mangala aarti</span><span className="text-error">3 seats left</span></li>
           </ul>
         </section>
+
+        <ItineraryEnhancement destinationSlug={destination.id} />
 
         <Link href="/plan" className="flex min-h-[44px] items-center justify-center rounded-[11px] bg-indigo-mid text-[13px] text-star-white">
           Add to my yatra plan

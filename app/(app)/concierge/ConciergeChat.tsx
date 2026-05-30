@@ -1,269 +1,906 @@
 'use client';
 
-import Link from 'next/link';
-import { FormEvent, useEffect, useRef, useState } from 'react';
-import { useMeeraChat } from '@/hooks/useMeeraChat';
-import './concierge-animations.css';
+import { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  useMeeraStore,
+  TOP_DESTINATIONS,
+  NEEDS_CHIPS,
+} from '@/store/meeraStore';
+import { MeeraItineraryCard } from '@/components/concierge/MeeraItineraryCard';
+import MeeraAvatar from '@/components/concierge/MeeraAvatar';
+import MandalaBackground from '@/components/concierge/MandalaBackground';
+import OfferingChips from '@/components/concierge/OfferingChips';
+import { M } from '@/components/concierge/tokens';
+import type { BudgetTier, GeneratedItinerary } from '@/types/yatra';
 
-// MEERA HEALTH: If Meera shows 'unavailable' in production, check:
-// (1) Vercel env vars — GROQ_API_KEY must be set, (2) /api/meera/health endpoint,
-// (3) Vercel function logs for MEERA_CONFIG_MISSING
+// ─── Destination name → slug mapping ─────────────────────────────────────────
 
-interface ConciergeChatProps {
-  prefillQuery?: string;
+function toDestinationSlug(destination: string): string {
+  const lower = destination.toLowerCase();
+  if (lower.includes('char dham') || lower.includes('char-dham')) return 'char_dham';
+  if (lower.includes('kedarnath')) return 'kedarnath';
+  if (lower.includes('badrinath')) return 'badrinath';
+  if (lower.includes('varanasi') || lower.includes('kashi')) return 'varanasi';
+  if (lower.includes('tirupati')) return 'tirupati';
+  if (lower.includes('shirdi')) return 'shirdi';
+  if (lower.includes('vrindavan')) return 'vrindavan';
+  if (lower.includes('mathura')) return 'mathura';
+  if (lower.includes('puri') || lower.includes('jagannath')) return 'puri';
+  if (lower.includes('amritsar') || lower.includes('golden temple')) return 'amritsar';
+  if (lower.includes('sabarimala') || lower.includes('ayyappa')) return 'sabarimala';
+  if (lower.includes('amarnath')) return 'amarnath';
+  if (lower.includes('vaishno') || lower.includes('vaishnodevi')) return 'vaishnodevi';
+  if (lower.includes('rameshwaram') || lower.includes('rameswaram')) return 'rameshwaram';
+  return lower.replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 }
 
-const WHATSAPP_NUMBER =
-  process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP?.replace(/\D/g, '') ?? '910000000000';
+function saveItineraryAndNavigate(itinerary: GeneratedItinerary, fromCity?: string) {
+  const id = Date.now().toString();
+  const slug = toDestinationSlug(itinerary.destination);
+  const durationMatch = itinerary.duration.match(/(\d+)\s*Days?.*?(\d+)\s*Nights?/i);
+  const totalDays = durationMatch ? parseInt(durationMatch[1], 10) : itinerary.days.length;
+  const totalNights = durationMatch ? parseInt(durationMatch[2], 10) : Math.max(0, totalDays - 1);
 
-function buildWhatsAppLink(message: string) {
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  const stub = {
+    title: itinerary.title,
+    destinationSlug: slug,
+    totalDays,
+    totalNights,
+    days: itinerary.days.map((d, i) => {
+      const dayNumMatch = d.day.match(/\d+/);
+      return {
+        dayNumber: dayNumMatch ? parseInt(dayNumMatch[0], 10) : i + 1,
+        title: d.title,
+        description: d.description,
+        highlights: d.highlights,
+        location: d.stay,
+      };
+    }),
+  };
+
+  // Bridge fromCity to itinerary page (reads yaatri_plan_draft.startingCity)
+  try {
+    const raw = localStorage.getItem('yaatri_plan_draft');
+    const draft = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+    localStorage.setItem('yaatri_plan_draft', JSON.stringify({ ...draft, startingCity: fromCity ?? '' }));
+  } catch { /* ignore */ }
+
+  localStorage.setItem(`yaatri_itinerary_${id}`, JSON.stringify(stub));
+  window.location.href = `/itinerary/${id}`;
 }
 
-export function ConciergeChat({ prefillQuery = '' }: ConciergeChatProps) {
-  const { messages, isStreaming, error, send, retry, clearError } = useMeeraChat();
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function parseGroupCount(label: string): number {
+  if (label === 'Just me') return 1;
+  if (label === '2') return 2;
+  if (label.startsWith('3')) return 3;
+  if (label.startsWith('5')) return 5;
+  return 9;
+}
+
+function parseBudgetTier(label: string): BudgetTier {
+  if (label === 'Basic') return 'basic';
+  if (label === 'Premium') return 'premium';
+  return 'standard';
+}
+
+// ─── Thinking Indicator (sacred flame) ───────────────────────────────────────
+
+function ThinkingIndicator() {
+  return (
+    <motion.div
+      key="thinking"
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+      transition={{ duration: 0.22, ease: 'easeOut' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}
+    >
+      <MeeraAvatar size={36} />
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 14px',
+          background: M.parchment,
+          border: `1px solid ${M.divider}`,
+          borderRadius: '0 12px 12px 12px',
+        }}
+      >
+        <span style={{ fontSize: 18, lineHeight: 1 }}>🪔</span>
+        <span
+          style={{
+            fontFamily: 'var(--font-cormorant), Georgia, serif',
+            fontStyle: 'italic',
+            fontSize: 14,
+            color: M.warmBrown,
+          }}
+        >
+          crafting your sacred yatra…
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Send Icon ────────────────────────────────────────────────────────────────
+
+function SendIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M22 2L11 13" />
+      <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+    </svg>
+  );
+}
+
+// ─── Chip button ──────────────────────────────────────────────────────────────
+
+function Chip({ label, active, onClick }: { label: string; active?: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flexShrink: 0,
+        fontSize: 12,
+        padding: '6px 13px',
+        borderRadius: 20,
+        border: `1.5px solid ${active ? M.terracotta : M.divider}`,
+        background: active ? M.terracotta : M.parchment,
+        color: active ? M.parchment : M.warmBrown,
+        cursor: 'pointer',
+        transition: 'all 0.15s ease',
+        fontFamily: 'inherit',
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export function ConciergeChat() {
+  const {
+    step, messages, currentChips, brief, itinerary, activeChipMessageId,
+    init, selectDestination, submitFromCity, submitTravelMonth,
+    submitGroupSize, submitBudgetTier, submitSpecialNeeds,
+    setItinerary, setGenerationError, selectOfferingChip, submitPhone, reset,
+  } = useMeeraStore();
+
   const [draft, setDraft] = useState('');
+  const [phone, setPhone] = useState('');
+  const [specialNeedsSelected, setSpecialNeedsSelected] = useState<Set<string>>(new Set());
   const bottomRef = useRef<HTMLDivElement>(null);
-  const prefillSentRef = useRef(false);
+  const generationCalledRef = useRef(false);
+  const saveBriefCalledRef = useRef(false);
+
+  useEffect(() => {
+    init();
+    generationCalledRef.current = false;
+    saveBriefCalledRef.current = false;
+  }, [init]);
+
+  useEffect(() => {
+    if (step === 'SPECIAL_NEEDS') setSpecialNeedsSelected(new Set());
+  }, [step]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, step]);
 
+  // Itinerary generation
   useEffect(() => {
-    if (prefillQuery && !prefillSentRef.current) {
-      prefillSentRef.current = true;
-      void send(prefillQuery);
-    }
-  }, [prefillQuery, send]);
+    if (step !== 'GENERATING' || generationCalledRef.current) return;
+    generationCalledRef.current = true;
 
-  const handleSend = (e?: FormEvent) => {
-    e?.preventDefault();
-    const text = draft.trim();
-    if (!text || isStreaming) return;
-    setDraft('');
-    void send(text);
+    const generate = async () => {
+      try {
+        const res = await fetch('/api/yatra/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(brief),
+        });
+        if (!res.ok) throw new Error('Generation failed');
+        const data = (await res.json()) as GeneratedItinerary;
+        setItinerary(data);
+      } catch (err) {
+        console.error('[ConciergeChat] generation error:', err);
+        setGenerationError('Could not create itinerary. Please try again.');
+      }
+    };
+
+    void generate();
+  }, [step, brief, setItinerary, setGenerationError]);
+
+  // Save brief to DB
+  useEffect(() => {
+    if (step !== 'DONE' || !brief.phone || saveBriefCalledRef.current) return;
+    saveBriefCalledRef.current = true;
+
+    const save = async () => {
+      try {
+        await fetch('/api/yatra/brief', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...brief, itinerary }),
+        });
+      } catch (err) {
+        console.error('[ConciergeChat] brief save error:', err);
+      }
+    };
+
+    void save();
+  }, [step, brief, itinerary]);
+
+  // ── Event handlers ──────────────────────────────────────────────────────────
+
+  const handleChipTap = (chip: string) => {
+    switch (step) {
+      case 'GREETING':        selectDestination(chip); break;
+      case 'FROM_CITY':       submitFromCity(chip); break;
+      case 'TRAVEL_MONTH':    submitTravelMonth(chip); break;
+      case 'GROUP_SIZE':      submitGroupSize(chip, parseGroupCount(chip)); break;
+      case 'BUDGET_TIER':     submitBudgetTier(chip, parseBudgetTier(chip)); break;
+      default: break;
+    }
   };
 
-  const lastUserText =
-    messages.filter((m) => m.role === 'user').at(-1)?.text ??
-    'Namaste Meera, I need help planning my yatra';
+  const toggleNeed = (chip: string) => {
+    setSpecialNeedsSelected((prev) => {
+      const next = new Set(prev);
+      if (chip === 'None of these') return new Set(['None of these']);
+      next.delete('None of these');
+      if (next.has(chip)) next.delete(chip); else next.add(chip);
+      return next;
+    });
+  };
 
-  const visibleMessages = messages.filter((m) => !m.streaming);
+  const submitNeeds = () => {
+    const selected = Array.from(specialNeedsSelected);
+    const isNone = selected.length === 0 || selected.includes('None of these');
+    const label = isNone ? 'None' : selected.join(', ');
+    generationCalledRef.current = false;
+    submitSpecialNeeds(label, isNone ? [] : selected);
+    setSpecialNeedsSelected(new Set());
+  };
+
+  const handleSend = () => {
+    const text = draft.trim();
+    if (!text) return;
+    setDraft('');
+    switch (step) {
+      case 'GREETING':     selectDestination(text); break;
+      case 'FROM_CITY':    submitFromCity(text); break;
+      case 'TRAVEL_MONTH': submitTravelMonth(text); break;
+      case 'GROUP_SIZE': {
+        const n = parseInt(text, 10);
+        submitGroupSize(text, isNaN(n) ? 1 : n);
+        break;
+      }
+      case 'BUDGET_TIER':   submitBudgetTier(text, parseBudgetTier(text)); break;
+      case 'SPECIAL_NEEDS': {
+        generationCalledRef.current = false;
+        submitSpecialNeeds(text, [text]);
+        break;
+      }
+      default: break;
+    }
+  };
+
+  const handlePhoneSubmit = () => {
+    const p = phone.replace(/\D/g, '');
+    if (p.length < 10) return;
+    submitPhone(p);
+    setPhone('');
+  };
+
+  const handleReset = () => {
+    generationCalledRef.current = false;
+    saveBriefCalledRef.current = false;
+    reset();
+  };
+
+  // ── Derived ─────────────────────────────────────────────────────────────────
+
+  const activeSteps = ['GREETING', 'FROM_CITY', 'TRAVEL_MONTH', 'GROUP_SIZE', 'BUDGET_TIER', 'SPECIAL_NEEDS'];
+  const showTextInput = activeSteps.includes(step);
+
+  const inputPlaceholderMap: Record<string, string> = {
+    GREETING: 'Or type a destination…',
+    FROM_CITY: 'Or type your city…',
+    TRAVEL_MONTH: 'Or type a month…',
+    GROUP_SIZE: 'Or type a number…',
+    BUDGET_TIER: 'Or describe your budget…',
+    SPECIAL_NEEDS: 'Or type your needs…',
+  };
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <div
-      className="flex flex-col h-screen overflow-hidden"
       style={{
-        background: 'linear-gradient(175deg, #C85A1E 0%, #E8C88A 15%, #F5EDD9 48%, #EDE4CC 100%)',
+        minHeight: '100svh',
+        background: M.cream,
+        display: 'flex',
+        justifyContent: 'center',
       }}
     >
-      {/* HEADER */}
-      <header
-        className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3 backdrop-blur-md flex-shrink-0"
-        style={{ background: 'rgba(44, 26, 14, 0.88)' }}
-      >
-        <div className="relative flex-shrink-0">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-[#FBF5E8] font-serif text-lg ring-2 ring-[#F2C97E] select-none"
-            style={{ background: 'radial-gradient(circle at 35% 35%, #F2C97E, #C85A1E)' }}
-          >
-            म
-          </div>
-          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 ring-2 ring-[rgba(44,26,14,0.88)]" />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <p className="text-[#F5EDD9] text-sm font-sans font-medium leading-tight truncate">
-            Meera · Yaatri Concierge
-          </p>
-          <p className="text-[#F2C97E] text-xs font-sans">● Online now</p>
-        </div>
-
-        <a
-          href={buildWhatsAppLink(lastUserText)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-xs font-sans font-medium flex-shrink-0 transition-opacity hover:opacity-90"
-          style={{ background: 'rgba(37, 211, 102, 0.85)' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-          </svg>
-          WhatsApp
-        </a>
-      </header>
-
-      {/* SCROLL AREA */}
-      <div className="flex-1 overflow-y-auto px-4 pt-5 pb-4 flex flex-col gap-3">
-        {visibleMessages.length === 0 && !isStreaming && (
-          <div className="flex flex-col items-center justify-center flex-1 gap-4 py-20 text-center">
-            <span className="text-6xl leading-none select-none">🪔</span>
-            <p
-              className="font-sans text-sm leading-relaxed max-w-[200px]"
-              style={{ color: '#7A5C42' }}
-            >
-              Tell Meera where your journey calls you
-            </p>
-          </div>
-        )}
-
-        {visibleMessages.map((msg) =>
-          msg.role === 'assistant' ? (
-            <div
-              key={msg.id}
-              className="flex items-end gap-2 max-w-[85%]"
-              style={{ animation: 'floatUp 0.35s ease-out both' }}
-            >
-              <div
-                className="backdrop-blur-sm rounded-r-2xl rounded-tl-2xl px-4 py-3 border-l-[3px] border-[#C85A1E]"
-                style={{
-                  background: 'rgba(251, 245, 232, 0.82)',
-                  boxShadow: '0 2px 12px rgba(44, 26, 14, 0.12)',
-                }}
-              >
-                <p className="font-sans text-sm leading-relaxed" style={{ color: '#2C1A0E' }}>
-                  {msg.text}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div
-              key={msg.id}
-              className="flex justify-end"
-              style={{ animation: 'floatUp 0.35s ease-out both' }}
-            >
-              <div
-                className="bg-[#C85A1E] rounded-l-2xl rounded-tr-2xl px-4 py-3 max-w-[75%]"
-                style={{ boxShadow: '0 2px 8px rgba(200, 90, 30, 0.35)' }}
-              >
-                <p className="font-sans text-sm leading-relaxed text-[#FBF5E8]">
-                  {msg.text}
-                </p>
-              </div>
-            </div>
-          ),
-        )}
-
-        {isStreaming && (
-          <div
-            className="flex items-end gap-2 max-w-[85%]"
-            style={{ animation: 'floatUp 0.35s ease-out both' }}
-          >
-            <div
-              className="backdrop-blur-sm rounded-r-2xl rounded-tl-2xl px-4 py-3 border-l-[3px] border-[#C85A1E]"
-              style={{ background: 'rgba(251, 245, 232, 0.82)' }}
-            >
-              <div className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#C85A1E] animate-bounce [animation-delay:0ms]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-[#C85A1E] animate-bounce [animation-delay:150ms]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-[#C85A1E] animate-bounce [animation-delay:300ms]" />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="px-0 pb-2">
-            {error.code === 'unauthorized' ? (
-              <div
-                className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm font-sans"
-                style={{ background: 'rgba(251, 245, 232, 0.82)', color: '#2C1A0E' }}
-              >
-                <span>Please sign in again to chat with Meera.</span>
-                <Link
-                  href="/signin"
-                  onClick={clearError}
-                  className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#FBF5E8] bg-[#C85A1E]"
-                >
-                  Sign in
-                </Link>
-              </div>
-            ) : (
-              <div
-                className="flex flex-col gap-3 rounded-2xl px-4 py-3 text-sm font-sans"
-                style={{ background: 'rgba(251, 245, 232, 0.82)', color: '#2C1A0E' }}
-              >
-                <span>Meera is unavailable right now — please try again</span>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={retry}
-                    className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#FBF5E8] bg-[#C85A1E]"
-                  >
-                    Retry
-                  </button>
-                  <a
-                    href={buildWhatsAppLink(lastUserText)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={clearError}
-                    className="flex items-center gap-1.5 shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold"
-                    style={{ background: 'rgba(37, 211, 102, 0.15)', color: '#1a8a45' }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                    </svg>
-                    Continue on WhatsApp
-                  </a>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div ref={bottomRef} />
-      </div>
-
-      {/* COMPOSER BAR */}
       <div
-        className="flex-shrink-0 flex items-center gap-3 px-4 py-3 backdrop-blur-md border-t"
         style={{
-          background: 'rgba(237, 228, 204, 0.92)',
-          borderColor: 'rgba(242, 201, 126, 0.5)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0.75rem)',
+          width: '100%',
+          maxWidth: 480,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100svh',
+          position: 'relative',
         }}
       >
-        <input
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-          placeholder="Ask Meera…"
-          disabled={isStreaming}
-          className="flex-1 rounded-full px-4 py-2.5 text-sm font-sans outline-none border disabled:opacity-60"
+        {/* Mandala background */}
+        <MandalaBackground />
+
+        {/* ── Header ──────────────────────────────────────────────────────── */}
+        <header
           style={{
-            background: 'rgba(251, 245, 232, 0.8)',
-            borderColor: 'rgba(242, 201, 126, 0.4)',
-            color: '#2C1A0E',
+            background: M.terracotta,
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            flexShrink: 0,
+            zIndex: 10,
+            position: 'relative',
           }}
-        />
-        <button
-          onClick={handleSend}
-          disabled={!draft.trim() || isStreaming}
-          aria-label="Send message"
-          className="w-11 h-11 rounded-full bg-[#C85A1E] flex items-center justify-center flex-shrink-0 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ boxShadow: '0 2px 8px rgba(200, 90, 30, 0.4)' }}
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#FBF5E8"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+          <MeeraAvatar size={40} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-cormorant), Georgia, serif',
+                fontSize: 20,
+                fontWeight: 600,
+                color: M.parchment,
+                lineHeight: 1.1,
+              }}
+            >
+              Meera
+            </span>
+            <span
+              style={{
+                fontSize: 10,
+                letterSpacing: '0.1em',
+                color: M.terracottaMuted,
+                textTransform: 'uppercase',
+              }}
+            >
+              Your Yatra Guide
+            </span>
+          </div>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 10, color: `${M.parchment}88` }}>Online</span>
+            {step !== 'GREETING' && (
+              <button
+                onClick={handleReset}
+                title="Start over"
+                aria-label="Start over"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: `${M.parchment}88`,
+                  cursor: 'pointer',
+                  fontSize: 16,
+                  padding: '4px',
+                }}
+              >
+                ↺
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* ── Chat scroll area ─────────────────────────────────────────────── */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '16px 16px 8px',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          {/* Messages */}
+          {messages.map((msg) => (
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: msg.itinerary ? 0.35 : 0.22, ease: 'easeOut' }}
+              style={{
+                marginBottom: 12,
+                display: 'flex',
+                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                gap: 10,
+                alignItems: 'flex-start',
+              }}
+            >
+              {msg.role === 'meera' ? (
+                <>
+                  <MeeraAvatar size={32} />
+                  <div style={{ maxWidth: '82%', display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {msg.itinerary ? (
+                      <>
+                        <MeeraItineraryCard
+                          itinerary={msg.itinerary}
+                          fromCity={brief.fromCity}
+                          travelMonth={brief.travelMonth}
+                          groupSize={brief.groupSize}
+                          budgetTier={brief.budgetTier}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => saveItineraryAndNavigate(msg.itinerary!, brief.fromCity)}
+                          style={{
+                            marginTop: 8,
+                            padding: '10px 16px',
+                            background: '#C85A1E',
+                            color: '#F5EDD9',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            width: '100%',
+                          }}
+                        >
+                          View Full Itinerary →
+                        </button>
+                      </>
+                    ) : (
+                      <div
+                        style={{
+                          padding: '10px 14px',
+                          background: M.parchment,
+                          border: `1px solid ${M.divider}`,
+                          borderRadius: '0 12px 12px 12px',
+                          borderLeft: `3px solid ${M.terracotta}`,
+                        }}
+                      >
+                        {msg.isGreeting ? (
+                          <>
+                            <p
+                              style={{
+                                fontFamily: 'var(--font-cormorant), Georgia, serif',
+                                fontSize: 17,
+                                fontStyle: 'italic',
+                                color: M.terracotta,
+                                margin: '0 0 4px',
+                                lineHeight: 1.2,
+                              }}
+                            >
+                              नमस्ते 🪔
+                            </p>
+                            <p
+                              style={{
+                                fontSize: 13,
+                                color: M.warmBrown,
+                                lineHeight: 1.6,
+                                margin: 0,
+                                whiteSpace: 'pre-line',
+                              }}
+                            >
+                              {msg.text}
+                            </p>
+                          </>
+                        ) : (
+                          <p
+                            style={{
+                              fontSize: 13,
+                              color: M.warmBrown,
+                              lineHeight: 1.6,
+                              margin: 0,
+                              whiteSpace: 'pre-line',
+                            }}
+                          >
+                            {msg.text}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Offering chips — only for active chip message */}
+                    {msg.offeringChips && msg.id === activeChipMessageId && (
+                      <OfferingChips
+                        chips={msg.offeringChips}
+                        onSelect={(chip) => {
+                          if (chip.includes('book')) generationCalledRef.current = false;
+                          selectOfferingChip(chip);
+                        }}
+                      />
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div
+                  style={{
+                    padding: '8px 14px',
+                    background: M.terracotta,
+                    color: M.parchment,
+                    borderRadius: '12px 12px 0 12px',
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                    maxWidth: '72%',
+                  }}
+                >
+                  {msg.text}
+                </div>
+              )}
+            </motion.div>
+          ))}
+
+          {/* ── Destination grid (GREETING) ────────────────────────────────── */}
+          <AnimatePresence>
+            {step === 'GREETING' && (
+              <motion.div
+                key="destination-grid"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: 8,
+                  paddingLeft: 42,
+                  marginTop: 4,
+                  marginBottom: 8,
+                }}
+              >
+                {TOP_DESTINATIONS.slice(0, 14).map((dest) => (
+                  <button
+                    key={dest}
+                    onClick={() => handleChipTap(dest)}
+                    style={{
+                      background: M.parchment,
+                      border: `1px solid ${M.divider}`,
+                      borderRadius: 10,
+                      padding: '8px 4px',
+                      minHeight: 48,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'border-color 0.15s',
+                      gap: 2,
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = M.terracotta;
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = M.divider;
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "'Noto Sans Devanagari', sans-serif",
+                        fontSize: 12,
+                        color: M.gold,
+                        lineHeight: 1,
+                      }}
+                    >
+                      ॐ
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-cormorant), Georgia, serif',
+                        fontSize: 12,
+                        color: M.deepBrown,
+                        lineHeight: 1.25,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {dest}
+                    </span>
+                  </button>
+                ))}
+                <button
+                  style={{
+                    background: M.parchment,
+                    border: `1px dashed ${M.divider}`,
+                    borderRadius: 10,
+                    padding: '8px 4px',
+                    minHeight: 48,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => document.getElementById('meera-text-input')?.focus()}
+                >
+                  <span style={{ fontSize: 11, color: M.mutedText, fontStyle: 'italic' }}>
+                    + more
+                  </span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Regular chips (non-GREETING, non-SPECIAL_NEEDS) ──────────── */}
+          <AnimatePresence mode="wait">
+            {step !== 'GREETING' && step !== 'SPECIAL_NEEDS' && currentChips.length > 0 && step !== 'PHONE' && (
+              <motion.div
+                key={`chips-${step}`}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                style={{
+                  paddingLeft: 42,
+                  marginBottom: 8,
+                  display: 'flex',
+                  gap: 6,
+                  flexWrap: step === 'TRAVEL_MONTH' ? 'nowrap' : 'wrap',
+                  overflowX: step === 'TRAVEL_MONTH' ? 'auto' : undefined,
+                }}
+              >
+                {currentChips.map((chip) => (
+                  <Chip key={chip} label={chip} onClick={() => handleChipTap(chip)} />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Special needs multi-select ─────────────────────────────────── */}
+          <AnimatePresence mode="wait">
+            {step === 'SPECIAL_NEEDS' && (
+              <motion.div
+                key="chips-SPECIAL_NEEDS"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                style={{
+                  paddingLeft: 42,
+                  marginBottom: 8,
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                }}
+              >
+                {NEEDS_CHIPS.map((chip) => (
+                  <Chip
+                    key={chip}
+                    label={chip}
+                    active={specialNeedsSelected.has(chip)}
+                    onClick={() => toggleNeed(chip)}
+                  />
+                ))}
+                <button
+                  onClick={submitNeeds}
+                  style={{
+                    fontSize: 12,
+                    padding: '6px 14px',
+                    borderRadius: 20,
+                    border: 'none',
+                    background: M.terracotta,
+                    color: M.parchment,
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  Done ✓
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Thinking indicator (GENERATING) ───────────────────────────── */}
+          <AnimatePresence>
+            {step === 'GENERATING' && <ThinkingIndicator />}
+          </AnimatePresence>
+
+          {/* ── Phone input (PHONE step) ───────────────────────────────────── */}
+          <AnimatePresence>
+            {step === 'PHONE' && (
+              <motion.div
+                key="phone-input"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22 }}
+                style={{ paddingLeft: 42, marginBottom: 12 }}
+              >
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    background: M.parchment,
+                    border: `1.5px solid ${M.divider}`,
+                    borderRadius: 24,
+                    padding: '6px 6px 6px 14px',
+                    gap: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 12, color: M.mutedText, borderRight: `1px solid ${M.divider}`, paddingRight: 8 }}>
+                    +91
+                  </span>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handlePhoneSubmit(); }}
+                    placeholder="Mobile number"
+                    inputMode="tel"
+                    maxLength={10}
+                    autoFocus
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: 13,
+                      color: M.deepBrown,
+                      width: 140,
+                    }}
+                  />
+                  <button
+                    onClick={handlePhoneSubmit}
+                    disabled={phone.length < 10}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      background: phone.length >= 10 ? M.terracotta : M.creamDark,
+                      border: 'none',
+                      color: phone.length >= 10 ? M.parchment : M.mutedText,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: phone.length >= 10 ? 'pointer' : 'default',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <SendIcon />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Confirmation card (DONE) ───────────────────────────────────── */}
+          <AnimatePresence>
+            {step === 'DONE' && brief.phone && (
+              <motion.div
+                key="confirmation"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                style={{ paddingLeft: 42, marginBottom: 12 }}
+              >
+                <div
+                  style={{
+                    background: M.cardGradient,
+                    borderRadius: 14,
+                    padding: '18px 20px',
+                    maxWidth: 300,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: '50%',
+                      background: M.gold,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 10,
+                    }}
+                  >
+                    <span style={{ color: M.deepBrown, fontSize: 16 }}>✓</span>
+                  </div>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-cormorant), Georgia, serif',
+                      fontSize: 17,
+                      fontWeight: 600,
+                      color: M.goldLight,
+                      margin: '0 0 6px',
+                    }}
+                  >
+                    Your yatra is reserved.
+                  </p>
+                  <p style={{ fontSize: 12, color: M.terracottaMuted, margin: 0, lineHeight: 1.5 }}>
+                    A pilgrimage advisor will call you within 24 hours to confirm dates, hotels and darshan timings.
+                  </p>
+                </div>
+                <button
+                  onClick={handleReset}
+                  style={{
+                    marginTop: 12,
+                    background: 'transparent',
+                    border: `1.5px solid ${M.terracotta}`,
+                    color: M.terracotta,
+                    borderRadius: 20,
+                    padding: '7px 16px',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-cormorant), Georgia, serif',
+                  }}
+                >
+                  Plan another yatra
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div ref={bottomRef} />
+        </div>
+
+        {/* ── Bottom text input ────────────────────────────────────────────── */}
+        {showTextInput && (
+          <div
+            style={{
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 14px',
+              background: M.parchment,
+              borderTop: `1px solid ${M.divider}`,
+              position: 'relative',
+              zIndex: 10,
+            }}
           >
-            <path d="M22 2L11 13" />
-            <path d="M22 2L15 22L11 13L2 9L22 2Z" />
-          </svg>
-        </button>
+            <input
+              id="meera-text-input"
+              type="text"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder={inputPlaceholderMap[step] ?? 'Type your answer…'}
+              style={{
+                flex: 1,
+                background: M.cream,
+                border: `1px solid ${M.divider}`,
+                borderRadius: 20,
+                padding: '9px 16px',
+                fontSize: 13,
+                color: M.deepBrown,
+                outline: 'none',
+                fontFamily: 'inherit',
+              }}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!draft.trim()}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                border: 'none',
+                background: draft.trim() ? M.terracotta : M.creamDark,
+                color: draft.trim() ? M.parchment : M.mutedText,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: draft.trim() ? 'pointer' : 'default',
+                flexShrink: 0,
+              }}
+              aria-label="Send"
+            >
+              <SendIcon />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

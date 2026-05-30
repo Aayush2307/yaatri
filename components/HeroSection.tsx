@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { DESTINATIONS } from '@/data/destinations'
 
-const CHIPS = [
-  { id: 'varanasi',     icon: '🕉',  label: 'Plan my Varanasi yatra',      message: 'I want to plan my Varanasi yatra' },
-  { id: 'kashi-timing', icon: '🌅',  label: 'Best time to visit Kashi',     message: 'What is the best time to visit Kashi?' },
-  { id: 'puja-father',  icon: '🪔',  label: 'Puja for my departed father',  message: 'I need help arranging puja for my departed father' },
-  { id: 'char-dham',    icon: '🚶',  label: 'Char Dham for seniors',        message: 'Help me plan Char Dham yatra for senior citizens' },
-]
+const CHIPS = DESTINATIONS.slice(0, 4).map(d => ({
+  id: d.id,
+  icon: d.icon,
+  label: d.name,
+  yatra: d.name,
+}))
 
 function MandalaSVG() {
   return (
@@ -187,7 +188,7 @@ export default function HeroSection() {
               <button
                 key={chip.id}
                 className="hero-chip"
-                onClick={() => router.push(`/concierge?q=${encodeURIComponent(chip.message)}`)}
+                onClick={() => router.push(`/concierge?yatra=${encodeURIComponent(chip.yatra)}`)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '8px 15px',

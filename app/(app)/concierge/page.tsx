@@ -1,9 +1,10 @@
+import { Suspense } from 'react';
 import ConciergeChat from './ConciergeChat';
 
 export default function ConciergePage() {
   return (
-    <div className="h-full min-h-screen">
+    <Suspense fallback={null}>
       <ConciergeChat />
-    </div>
+    </Suspense>
   );
 }

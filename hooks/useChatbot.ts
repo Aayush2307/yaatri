@@ -30,7 +30,6 @@ const INITIAL_MESSAGE: ChatMessage = {
   content: 'Namaste. I can help with temple timings, muhurat, routes, and booking guidance.',
   actions: [
     { type: 'redirect', label: 'Explore Yatras', url: '/explore' },
-    { type: 'redirect', label: 'Plan a Yatra', url: '/plan' },
     { type: 'redirect', label: 'Talk to Meera', url: '/concierge' },
   ],
   timestamp: new Date().toISOString(),
