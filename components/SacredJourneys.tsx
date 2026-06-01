@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { useStaggerReveal } from '@/hooks/useStaggerReveal'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { DESTINATIONS, type Destination } from '@/data/destinations'
 
 function DestinationCard({ dest, visible, delay }: { dest: Destination; visible: boolean; delay: number }) {
@@ -133,7 +133,7 @@ function DestinationCard({ dest, visible, delay }: { dest: Destination; visible:
 }
 
 export default function SacredJourneys() {
-  const { ref, visible } = useStaggerReveal(DESTINATIONS.length)
+  const { ref, visible } = useScrollReveal()
 
   return (
     <section

@@ -39,6 +39,18 @@ const config: Config = {
         button: '10px',
         pill: '9999px',
       },
+      transitionTimingFunction: {
+        sacred: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      },
+      zIndex: {
+        base: '1',
+        content: '10',
+        sticky: '20',
+        overlay: '40',
+        chat: '50',
+        modal: '60',
+        toast: '70',
+      },
     },
   },
   plugins: [

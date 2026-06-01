@@ -1,6 +1,6 @@
 'use client'
 
-import { useStaggerReveal } from '@/hooks/useStaggerReveal'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 
 /* ─── Data ─── */
 
@@ -170,7 +170,7 @@ function StepCard({ step, visible, delay }: StepCardProps) {
 /* ─── Main Component ─── */
 
 export default function HowMeeraGuides() {
-  const { ref, visible } = useStaggerReveal(4)
+  const { ref, visible } = useScrollReveal()
 
   return (
     <section

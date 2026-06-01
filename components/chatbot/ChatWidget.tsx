@@ -35,7 +35,7 @@ export function ChatWidget() {
   if (pathname?.startsWith('/concierge')) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 flex flex-col items-end justify-end px-4 pb-[110px] sm:px-8 sm:pb-8">
+    <div className="pointer-events-none fixed inset-0 z-chat flex flex-col items-end justify-end px-4 pb-[110px] sm:px-8 sm:pb-8">
       <div className="flex flex-col items-end w-full sm:max-w-[460px]">
         {isOpen ? (
           <div className="pointer-events-auto flex h-[calc(100vh-180px)] sm:h-[calc(100vh-140px)] max-h-[750px] min-h-[500px] w-full flex-col overflow-hidden rounded-3xl border border-[#E7D5BF] bg-[#FFF8EE] shadow-[0_8px_40px_-5px_rgba(198,106,43,0.15)] transition-all mb-4">
